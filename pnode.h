@@ -8,6 +8,7 @@ using namespace std;
 
 class pnode: public node {
 	vector<vnode*> vnode_list;
+	pnode(int id):node(id) {}
 		
 };
 

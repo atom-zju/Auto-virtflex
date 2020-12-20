@@ -4,6 +4,7 @@
 #include<unordered_map>
 #include "vm.h"
 #include "pnode.h"
+#include "util.h"
 
 class topo_change_event{
 public:
@@ -17,6 +18,7 @@ private:
 	unordered_map<int, vm*> vm_map;
 	vector<pnode*> pnode_list;
 	vector<topo_change_event> event_list;
+	struct xs_handle *xs;
 	
 	vm* get_vm_by_id(int id);
 	int add_vm(vm*);
@@ -34,6 +36,7 @@ public:
 	void generate_events();
 	void process_events();
 	
+	topo_change_d();	
 	~topo_change_d(); // free vm_map and pnode_list
 
 };
