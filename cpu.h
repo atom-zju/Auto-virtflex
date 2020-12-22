@@ -3,10 +3,11 @@
 
 
 class cpu{
+public:
 	int cpuid;
 	bool enabled;
 
-	cpu(int id): cpuid(id) {}
+	cpu(int id, bool en): cpuid(id), enabled(en) {}
 
 	void enable();
 	void disable();

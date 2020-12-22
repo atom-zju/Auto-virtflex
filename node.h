@@ -10,9 +10,10 @@ class node{
 public:
 	int pnode_id;
 	int capacity;
-	set<cpu> vcpu_set;
+	set<cpu> cpu_set;
 	int bw_usage;
 	node(int id): pnode_id(id) {}
+	node(){}
 
 };
 

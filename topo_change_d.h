@@ -14,6 +14,8 @@ public:
 };
 
 class topo_change_d {
+	friend class vm;
+	friend class vnode;
 private:
 	unordered_map<int, vm*> vm_map;
 	vector<pnode*> pnode_list;
