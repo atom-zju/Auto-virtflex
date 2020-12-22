@@ -14,8 +14,7 @@ public:
 	string xs_path;
 	topo_change_d* topod;
 
-	void init_node();
-	void updat_node();
+	void update_node(unsigned int ts);
 	
 	int shrink();
 	int expand();

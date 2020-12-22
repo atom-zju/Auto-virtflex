@@ -2,6 +2,6 @@
 
 int main(){
 	topo_change_d topod;
-	topod.init_vm_map();	
+	topod.update_vm_map();	
 	return 0;
 }

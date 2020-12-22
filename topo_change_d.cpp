@@ -4,6 +4,7 @@
 using namespace std;
 
 topo_change_d::topo_change_d(){
+	ts = 0;
 	xs =  xs_daemon_open();
         if ( xs == NULL ) {
                 perror("Error when connecting to a xs daemon\n");
@@ -24,7 +25,8 @@ topo_change_d::~topo_change_d(){
 
 }
 
-void topo_change_d::init_vm_map(){
+void topo_change_d::update_vm_map(){
+	ts++;
 	vector<string> dir;
 	list_xenstore_directory(xs, string("/local/domain"), dir);
 	cout<<"/local/domain"<< endl;
@@ -32,12 +34,23 @@ void topo_change_d::init_vm_map(){
 		int vm_id =  stoi(x);
 		cout <<"\t" <<"VM: "<<stoi(x) << endl;
 		if(vm_map.find(vm_id) == vm_map.end()){
-			vm* v = new vm(this, string("/local/domain/").append(x));
-			v->init_vnode_map();
+			vm* v = new vm(vm_id, this, string("/local/domain/").append(x));
+			v->update_vnode_map(ts);
 			vm_map[vm_id] = v;	
 		}
+		else{
+		// vm exists in vm_map
+			vm_map[vm_id]->update_vnode_map(ts);
+		}
 	}
-	
-		
+
+	// delete obsolete vm
+	for(auto& x: vm_map){
+		auto v = x.second;
+		if(v->ts < ts){
+			delete v;
+			vm_map.erase(x.first);
+		}
+	}
 
 }

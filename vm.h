@@ -15,6 +15,8 @@ public:
 	unordered_map<int, vnode*> vnode_map;
 	string xs_path;
 	topo_change_d* topod;
+	unsigned int ts;
+
 	vnode* get_vnode_by_id(int id);
 	int add_vnode(vnode*);
 	int remove_vnode(int id);
@@ -22,10 +24,9 @@ public:
 	int shrink_vnode(int id);
 	int expand_vnode(int id);
 	
-	void init_vnode_map();
-	void update_vnode_map();
+	void update_vnode_map(unsigned int ts);
 	
-	vm(topo_change_d* d,string s): xs_path(s), topod(d){}
+	vm(int id, topo_change_d* d,string s): xs_path(s), topod(d), vm_id(id){}
 	~vm(); // free vnode_map pointers
 
 };

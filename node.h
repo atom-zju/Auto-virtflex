@@ -12,6 +12,8 @@ public:
 	int capacity;
 	set<cpu> cpu_set;
 	int bw_usage;
+	unsigned int ts;
+
 	node(int id): pnode_id(id) {}
 	node(){}
 

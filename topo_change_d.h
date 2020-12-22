@@ -21,6 +21,7 @@ private:
 	vector<pnode*> pnode_list;
 	vector<topo_change_event> event_list;
 	struct xs_handle *xs;
+	unsigned int ts; // timestamp
 	
 	vm* get_vm_by_id(int id);
 	int add_vm(vm*);
@@ -29,7 +30,6 @@ private:
 	int shrink_vm(int id, int vnode_id);
 	int expand_vm(int id, int vnode_id);
 public:
-	void init_vm_map();
 	void init_pnode_list();
 
 	void update_vm_map();
