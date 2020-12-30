@@ -50,6 +50,17 @@ int vnode::shrink(){
 }
 
 int vnode::expand(){
-	// set the target high and enable vcpus
+	// 1. set the topo_change flag to be 1, path: /numa/topo_change
+	// 2. change target to capacity
+	// 3. enable all vcpus
+
+	string topo_change_flag(xs_path.substr(0, xs_path.find_last_of("/\\")));
+	topo_change_flag = topo_change_flag.substr(0, topo_change_flag.find_last_of("/\\"));
+	topo_change_flag.append("/topo_change");
+	cout << "topo_change_flag path: " << topo_change_flag << endl;
+	
+	assert(topod);
+	write_to_xenstore_path(topod->xs, topo_change_flag,string("1"));
+	write_to_xenstore_path(topod->xs, string(xs_path).append("/target"),to_string(capacity));
 	return 0;
 }
