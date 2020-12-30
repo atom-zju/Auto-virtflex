@@ -11,6 +11,8 @@ class vnode: public node{
 public:
 	vm* owner_vm;
 	int vnode_id;
+	int target;
+	int low_target;
 	string xs_path;
 	topo_change_d* topod;
 

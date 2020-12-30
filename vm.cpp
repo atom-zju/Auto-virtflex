@@ -5,6 +5,13 @@
 
 using namespace std;
 
+vnode* vm::get_vnode_by_id(int id){
+	if(vnode_map.find(id) != vnode_map.end()){
+		return vnode_map[id];
+	}
+	return NULL;
+}
+
 vm::~vm(){
 	for(auto& x: vnode_map){
 		delete x.second;
@@ -42,4 +49,22 @@ void vm::update_vnode_map(unsigned int ts){
 			vnode_map.erase(x.first);
 		}
 	}
+}
+
+
+int vm::shrink_vnode(int id){
+	vnode* v = get_vnode_by_id(id);
+	if(!v){
+		cout<< "Didn't find vnode " << id << " in vm::shrink_vnode" <<endl;
+		return -1;
+	}
+	return v->shrink();
+}
+int vm::expand_vnode(int id){
+	vnode* v = get_vnode_by_id(id);
+        if(!v){
+                cout<< "Didn't find vnode " << id << " in vm::expand_vnode" <<endl;
+		return -1;
+	}
+        return v->expand();
 }

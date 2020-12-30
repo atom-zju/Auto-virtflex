@@ -3,6 +3,13 @@
 #include "util.h"
 using namespace std;
 
+vm* topo_change_d::get_vm_by_id(int id){
+	if(vm_map.find(id) != vm_map.end()){
+		return vm_map[id];
+	}
+	return NULL;
+}
+
 topo_change_d::topo_change_d(){
 	ts = 0;
 	xs =  xs_daemon_open();
@@ -53,4 +60,21 @@ void topo_change_d::update_vm_map(){
 		}
 	}
 
+}
+
+int topo_change_d::shrink_vm(int id, int vnode_id){
+	vm* v = get_vm_by_id(id);
+	if(!v){
+		cout<<"Didn't find vm " << id << " in topo_change_d::shrink_vm" <<endl;
+		return -1;
+	}
+	return v->shrink_vnode(vnode_id);
+}
+int topo_change_d::expand_vm(int id, int vnode_id){
+	vm* v = get_vm_by_id(id);
+	if(!v){
+		cout<<"Didn't find vm " << id << " in topo_change_d::expand_vm" <<endl;
+		return -1;
+	}
+	return v->expand_vnode(vnode_id);
 }

@@ -27,9 +27,10 @@ private:
 	int add_vm(vm*);
 	int remove_vm(int id);
 
+public:
 	int shrink_vm(int id, int vnode_id);
 	int expand_vm(int id, int vnode_id);
-public:
+	
 	void init_pnode_list();
 
 	void update_vm_map();
