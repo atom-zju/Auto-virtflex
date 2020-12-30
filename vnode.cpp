@@ -27,7 +27,7 @@ void vnode::update_node(unsigned int ts){
 	list_xenstore_directory(topod->xs, string(xs_path).append("/vcpu"),tmp_list);
 	for(auto& x: tmp_list){
 		cout<< "vcpu: " << x <<endl;
-		cpu_set.insert(cpu(stoi(x),true));
+		cpu_set.insert(cpu(stoi(x),true, owner_vm));
 	}
 	
 }
@@ -44,7 +44,9 @@ int vnode::shrink(){
 	assert(topod);
 	write_to_xenstore_path(topod->xs, topo_change_flag,string("2"));
 	write_to_xenstore_path(topod->xs, string(xs_path).append("/target"),to_string(low_target));
-
+	for(auto& x: cpu_set){
+		x.disable();
+	}
 	
 	return 0;	
 }
@@ -62,5 +64,8 @@ int vnode::expand(){
 	assert(topod);
 	write_to_xenstore_path(topod->xs, topo_change_flag,string("1"));
 	write_to_xenstore_path(topod->xs, string(xs_path).append("/target"),to_string(capacity));
+	for(auto& x: cpu_set){
+		x.enable();
+	}
 	return 0;
 }
