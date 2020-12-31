@@ -2,7 +2,9 @@
 
 int main(){
 	topo_change_d topod;
-	topod.update_vm_map();
-	topod.expand_vm(2, 3);	
+	topod.set_interval_ms(10000);
+	topod.start();
+	//topod.update_vm_map();
+	//topod.expand_vm(2, 3);	
 	return 0;
 }

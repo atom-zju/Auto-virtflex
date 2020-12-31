@@ -2,31 +2,39 @@
 #define TOPO_CHANGE_D_H
 
 #include<unordered_map>
+#include<deque>
 #include "vm.h"
 #include "pnode.h"
 #include "util.h"
 
+class topo_change_engine;
+
 class topo_change_event{
 public:
 	int vm_id;
-	int vnode_id;
+	vector<int> vnode_list;
 	int action; // -1: shrink; 1: expand
+	topo_change_event(int id, int a, vector<int> n):vm_id(id), action(a), vnode_list(n){}
 };
 
 class topo_change_d {
 	friend class vm;
 	friend class vnode;
 	friend class cpu;
+	friend class topo_change_engine;
 private:
 	unordered_map<int, vm*> vm_map;
 	vector<pnode*> pnode_list;
-	vector<topo_change_event> event_list;
+	deque<topo_change_event> event_list;
 	struct xs_handle *xs;
+	unsigned int interval_us;
 	unsigned int ts; // timestamp
+	topo_change_engine* engine;
 	
 	vm* get_vm_by_id(int id);
 	int add_vm(vm*);
 	int remove_vm(int id);
+	void process_event(topo_change_event& e);
 
 public:
 	int shrink_vm(int id, int vnode_id);
@@ -37,6 +45,8 @@ public:
 	void update_vm_map();
 	void update_pnode_list();
 
+	void set_interval_ms(unsigned int ms);
+	void start();
 	void generate_events();
 	void process_events();
 	

@@ -1,7 +1,7 @@
 CXX:=g++
 LFLAG:=-lxenstore
 CFLAG:=-g -std=c++11
-OBJ:= main.o cpu.o util.o topo_change_d.o vm.o node.o pnode.o vnode.o
+OBJ:= main.o cpu.o util.o topo_change_d.o vm.o node.o pnode.o vnode.o topo_change_engine.o
 
 all: topo_daemon
 

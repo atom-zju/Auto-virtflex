@@ -1,7 +1,15 @@
 #include <iostream>
+#include <unistd.h>
+#include <cassert>
 #include "topo_change_d.h"
 #include "util.h"
+#include "topo_change_engine.h"
+
 using namespace std;
+
+void topo_change_d::set_interval_ms(unsigned int ms){
+	interval_us = ms*1000;
+}
 
 vm* topo_change_d::get_vm_by_id(int id){
 	if(vm_map.find(id) != vm_map.end()){
@@ -17,6 +25,9 @@ topo_change_d::topo_change_d(){
                 perror("Error when connecting to a xs daemon\n");
                 exit(-1);
         }
+	engine = new topo_change_engine(this);
+	assert(engine);
+	engine->config();
 }
 
 topo_change_d::~topo_change_d(){
@@ -29,7 +40,7 @@ topo_change_d::~topo_change_d(){
 		delete x;
 	}
 	xs_daemon_close(xs);
-
+	delete engine;
 }
 
 void topo_change_d::update_vm_map(){
@@ -77,4 +88,39 @@ int topo_change_d::expand_vm(int id, int vnode_id){
 		return -1;
 	}
 	return v->expand_vnode(vnode_id);
+}
+
+void topo_change_d::start(){
+	while(1){
+		while(event_list.empty()){
+			usleep(interval_us);
+			generate_events();
+		}
+		process_events();
+	}
+
+}
+
+void topo_change_d::process_event(topo_change_event& e){
+	if(e.action!= 1 && e.action!=-1){
+		cout << "Cannot process event on vm: " << e.vm_id <<" in topo_change_d::process_event"<< endl;
+		return;
+	}
+	int (topo_change_d::*action_func)(int, int) = e.action==1? (&topo_change_d::expand_vm) : (&topo_change_d::shrink_vm);
+	for(int node: e.vnode_list){
+		(*this.*action_func)(e.vm_id, node);
+	}
+}
+
+void topo_change_d::process_events(){
+	while(!event_list.empty()){
+		auto& x = event_list.front();
+		process_event(x);
+		event_list.pop_front();
+	}
+}
+void topo_change_d::generate_events(){
+	cout << "==================topo_change_d::generate_events(), ts:" << ts <<"================" << endl;
+	update_vm_map();
+	engine->generate_events(event_list);			
 }

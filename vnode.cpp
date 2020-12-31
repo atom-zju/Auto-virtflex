@@ -21,12 +21,12 @@ void vnode::update_node(unsigned int ts){
 	// calculate low target base on capacity, formula:
 	// low_target = (80*1024 + capacity/1024*17)
 	low_target = (80*1024 + capacity/1024*17);
-	cout << "low_target: " << low_target << endl;
+	//cout << "low_target: " << low_target << endl;
 
 	// be carefull not to insert all the vcpus one more time everytime you update node
 	list_xenstore_directory(topod->xs, string(xs_path).append("/vcpu"),tmp_list);
 	for(auto& x: tmp_list){
-		cout<< "vcpu: " << x <<endl;
+		//cout<< "vcpu: " << x <<endl;
 		cpu_set.insert(cpu(stoi(x),true, owner_vm));
 	}
 	
