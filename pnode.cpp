@@ -1,5 +1,6 @@
 #include "pnode.h"
 #include <iostream>
+#include <cassert>
 
 pnode::~pnode(){
 	for(auto& x: vnode_map){
@@ -10,6 +11,12 @@ pnode::~pnode(){
 void pnode::register_vnode(int vm_id, vnode* n){
 	if(vnode_map.find(vm_id) == vnode_map.end()){
 		vnode_map[vm_id] = n;
+	}
+}
+void pnode::unregister_vnode(int vm_id, vnode* n){
+	if(vnode_map.find(vm_id) != vnode_map.end()){
+		assert(vnode_map[vm_id] == n);
+		vnode_map.erase(vm_id);
 	}
 }
 

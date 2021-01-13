@@ -62,9 +62,6 @@ void topo_change_d::update_vm_map(){
 		}
 	}
 	
-	for(auto& x: pnode_list){
-		x->update_vnode_map(ts);
-	}
 	// delete obsolete vm
 	for(auto& x: vm_map){
 		auto v = x.second;
@@ -72,6 +69,10 @@ void topo_change_d::update_vm_map(){
 			delete v;
 			vm_map.erase(x.first);
 		}
+	}
+
+	for(auto& x: pnode_list){
+		x->update_vnode_map(ts);
 	}
 
 }
@@ -98,6 +99,11 @@ void topo_change_d::register_pvnode(int vm_id, vnode* n, int pnode_id){
 		while(pnode_id >= pnode_list.size()) {pnode_list.push_back(new pnode(pnode_list.size()));}
 	}
 	pnode_list[pnode_id]->register_vnode(vm_id, n);
+}
+
+void topo_change_d::unregister_vnode(int vm_id, vnode* n, int pnode_id){
+	assert(pnode_id < pnode_list.size());
+	pnode_list[pnode_id]->unregister_vnode(vm_id, n);
 }
 
 void topo_change_d::start(){

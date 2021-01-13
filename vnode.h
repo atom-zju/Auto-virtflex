@@ -21,6 +21,8 @@ public:
 	
 	int shrink();
 	int expand();
+	
+	long average_bw_usage();
 
 	vnode(int vnode_id, string path, vm* o, topo_change_d* t): 
 		vnode_id(vnode_id), xs_path(path), topod(t), owner_vm(o), enabled(1){}

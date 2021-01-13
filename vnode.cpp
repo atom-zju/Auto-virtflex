@@ -128,3 +128,19 @@ int vnode::expand(){
 	}
 	return 0;
 }
+
+long vnode::average_bw_usage(){
+	assert(bw_rd.size() == bw_wr.size());
+	if(bw_rd.empty())
+		return -1;
+
+	long bw_usage = 0;
+	for(auto& x: bw_rd){
+		bw_usage+=x;
+	}
+	for(auto& x: bw_wr){
+		bw_usage+=x;
+	}
+	return bw_usage/(bw_rd.size()+ bw_wr.size());
+	
+}

@@ -14,6 +14,7 @@ public:
 	pnode(int id):node(id) {}
 	~pnode();		
 	void register_vnode(int vm_id, vnode* n);
+	void unregister_vnode(int vm_id, vnode* n);
 	void update_vnode_map(int ts);
 };
 

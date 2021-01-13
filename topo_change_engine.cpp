@@ -2,7 +2,8 @@
 #include <iostream>
 #include <cassert>
 
-static int  average_bw_changeness(vm* v){
+/*       Topology changeness              */
+static int  naive_toggle(vm* v){
 	static bool toggle = true;
 	toggle = !toggle;
 	if(toggle)
@@ -10,10 +11,27 @@ static int  average_bw_changeness(vm* v){
 	else 
 		return -1;
 }
+static int  average_bw_changeness(vm* v){
+	unsigned long low_thres = 1000;
+	unsigned long high_thres = 4000;
+	assert(v);
+	long avg_bw = v->average_bw_usage();
+	if(avg_bw < 0 )
+		return 0;
+	if(avg_bw < low_thres && v->active_node > 0)
+		return -1;
+	if(avg_bw > high_thres && v->active_node < v->total_node)
+		return 1;
+	return 0;
+}
+
+/*       Shrink candidate              */
+
 static int lowest_bw_candidate(vm* v, int num, vector<int>& can){
 	can.push_back(3);
 	return 0;
 }
+/*       Expand candidate              */
 static int first_available_candidate(vm* v, int num, vector<int>& can){
 	can.push_back(3);
 	return 0;

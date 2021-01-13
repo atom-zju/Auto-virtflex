@@ -15,6 +15,8 @@ public:
 	unordered_map<int, vnode*> vnode_map;
 	string xs_path;
 	string vcpu_path;
+	int total_node;
+	int active_node;
 	topo_change_d* topod;
 	unsigned int ts;
 
@@ -26,6 +28,7 @@ public:
 	int expand_vnode(int id);
 	
 	void update_vnode_map(unsigned int ts);
+	long average_bw_usage();
 	
 	vm(int id, topo_change_d* d,string s): xs_path(s), topod(d), vm_id(id), vcpu_path(s+"/cpu"){}
 	~vm(); // free vnode_map pointers
