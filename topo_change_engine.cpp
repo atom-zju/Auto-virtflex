@@ -9,7 +9,6 @@ static int  average_bw_changeness(vm* v){
 		return 1;
 	else 
 		return -1;
-	//return 0;
 }
 static int lowest_bw_candidate(vm* v, int num, vector<int>& can){
 	can.push_back(3);

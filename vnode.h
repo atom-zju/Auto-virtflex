@@ -13,6 +13,7 @@ public:
 	int vnode_id;
 	int target;
 	int low_target;
+	bool enabled;
 	string xs_path;
 	topo_change_d* topod;
 
@@ -22,7 +23,7 @@ public:
 	int expand();
 
 	vnode(int vnode_id, string path, vm* o, topo_change_d* t): 
-		vnode_id(vnode_id), xs_path(path), topod(t), owner_vm(o){}
+		vnode_id(vnode_id), xs_path(path), topod(t), owner_vm(o), enabled(1){}
 
 };
 

@@ -35,6 +35,7 @@ private:
 	int add_vm(vm*);
 	int remove_vm(int id);
 	void process_event(topo_change_event& e);
+	void register_pvnode(int vm_id, vnode* n, int pnode_id);
 
 public:
 	int shrink_vm(int id, int vnode_id);
