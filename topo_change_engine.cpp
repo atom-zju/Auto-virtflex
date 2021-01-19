@@ -12,28 +12,109 @@ static int  naive_toggle(vm* v){
 		return -1;
 }
 static int  average_bw_changeness(vm* v){
-	unsigned long low_thres = 1000;
-	unsigned long high_thres = 4000;
+	unsigned long low_thres = 500;
+	unsigned long high_thres = 800;
 	assert(v);
 	long avg_bw = v->average_bw_usage();
 	if(avg_bw < 0 )
 		return 0;
-	if(avg_bw < low_thres && v->active_node > 0)
+	if(avg_bw < low_thres && v->active_node > 1)
 		return -1;
 	if(avg_bw > high_thres && v->active_node < v->total_node)
 		return 1;
 	return 0;
 }
 
+struct comp_pair{
+	bool operator()(pair<long, int>& l, pair<long, int>& r){
+		return l.first <= r.first;
+	}
+};
+
 /*       Shrink candidate              */
 
 static int lowest_bw_candidate(vm* v, int num, vector<int>& can){
-	can.push_back(3);
+	v->active_node_list(can);
+
+	if(num >= can.size()){
+		return 0;
+	}
+	
+	vector<long> bw_usage;
+	for(int i =0; i< can.size(); i++){
+		auto node = v->get_vnode_by_id(can[i]);
+		if(node){
+			long bw = node->average_bw_usage();
+			if(bw>=0){
+				bw_usage.push_back(bw);
+				continue;
+			}
+		}
+		can.erase(can.begin()+i);
+		i--;
+	}
+	
+	if(num >= can.size()){
+                return 0;
+        }
+
+	//get the lowest num elements in bw_usage and return the corresponding vnode id in can
+	//can.push_back(3);
+	priority_queue<pair<long, int>, vector<pair<long, int>>, comp_pair> max_h;
+	for(int i=0; i < can.size(); i++){
+		max_h.push(make_pair(bw_usage[i], can[i]));
+		if(max_h.size() > num){
+			max_h.pop();
+		}
+	}
+	can.clear();
+	while(!max_h.empty()){
+		can.push_back(max_h.top().second);
+		max_h.pop();
+	}
+
 	return 0;
 }
+
 /*       Expand candidate              */
 static int first_available_candidate(vm* v, int num, vector<int>& can){
-	can.push_back(3);
+	v->inactive_node_list(can);
+	
+	if(num >= can.size()){
+		return 0;
+	}
+	
+	vector<long> active_competitor;
+	for(int i =0; i< can.size(); i++){
+		auto node = v->get_vnode_by_id(can[i]);
+		if(node){
+			long cnt = node->active_nodes_in_pnode();
+			active_competitor.push_back(cnt);
+			continue;
+		}
+		can.erase(can.begin()+i);
+		i--;
+	}
+	
+	if(num >= can.size()){
+		return 0;
+	}
+	
+	//get the lowest num elements in active_competitor and return the corresponding vnode id in can
+	//can.push_back(3);
+	priority_queue<pair<long, int>, vector<pair<long, int>>, comp_pair> max_h;
+	for(int i=0; i < can.size(); i++){
+		max_h.push(make_pair(active_competitor[i], can[i]));
+		if(max_h.size() > num){
+			max_h.pop();
+		}
+	}
+	can.clear();
+	while(!max_h.empty()){
+		can.push_back(max_h.top().second);
+		max_h.pop();
+	}
+
 	return 0;
 }
 

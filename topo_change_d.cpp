@@ -1,6 +1,9 @@
 #include <iostream>
 #include <unistd.h>
 #include <cassert>
+#include <linux/kernel.h>       /* for struct sysinfo */
+#include <sys/sysinfo.h>
+
 #include "topo_change_d.h"
 #include "util.h"
 #include "topo_change_engine.h"
@@ -136,7 +139,14 @@ void topo_change_d::process_events(){
 	}
 }
 void topo_change_d::generate_events(){
-	cout << "==================topo_change_d::generate_events(), ts:" << ts <<"================" << endl;
+	
+   	struct sysinfo s_info;
+    	int error = sysinfo(&s_info);
+    	if(error != 0)
+    	{
+        	printf("Error when getting system uptime, code error = %d\n", error);
+	}
+	cout << "==================topo_change_d::generate_events(), ts:" << ts <<"===== " <<s_info.uptime<< " ===========" << endl;
 	update_vm_map();
 	engine->generate_events(event_list);			
 }

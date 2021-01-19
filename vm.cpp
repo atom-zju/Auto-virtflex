@@ -85,6 +85,8 @@ long vm::average_bw_usage(){
 	long cnt = 0;
 
 	for(auto& x: vnode_map){
+		if(!(x.second->enabled))
+			continue;
 		long tmp = x.second->average_bw_usage();
 		if(tmp >= 0 ){
 			bw_usage += tmp;
@@ -93,4 +95,22 @@ long vm::average_bw_usage(){
 	}
 	return cnt>0? bw_usage/cnt: -1;
 	
+}
+
+void vm::active_node_list(vector<int>& v){
+	assert(v.empty());
+	for(auto& x: vnode_map){
+		if(x.second->enabled){
+			v.push_back(x.first);
+		}
+	}
+}
+
+void vm::inactive_node_list(vector<int>& v){
+	assert(v.empty());
+	for(auto& x: vnode_map){
+		if(!(x.second->enabled)){
+			v.push_back(x.first);
+		}
+	}
 }

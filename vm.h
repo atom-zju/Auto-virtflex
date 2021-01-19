@@ -30,6 +30,9 @@ public:
 	void update_vnode_map(unsigned int ts);
 	long average_bw_usage();
 	
+	void active_node_list(vector<int>& v);
+	void inactive_node_list(vector<int>& v);
+	
 	vm(int id, topo_change_d* d,string s): xs_path(s), topod(d), vm_id(id), vcpu_path(s+"/cpu"){}
 	~vm(); // free vnode_map pointers
 
