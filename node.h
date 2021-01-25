@@ -17,7 +17,7 @@ public:
 	unsigned int ts;
 
 	node(int id): pnode_id(id) {}
-	node(){}
+	node() {}
 
 };
 

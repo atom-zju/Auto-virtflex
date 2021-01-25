@@ -24,9 +24,11 @@ public:
 	
 	long average_bw_usage();
 	int active_nodes_in_pnode();
+	void read_bw_usage_from_xs();
+	int change_pnode_owner_xs(bool own);
 
 	vnode(int vnode_id, string path, vm* o, topo_change_d* t): 
-		vnode_id(vnode_id), xs_path(path), topod(t), owner_vm(o), enabled(1){}
+		vnode_id(vnode_id), xs_path(path), topod(t), enabled(1), owner_vm(o){}
 
 };
 

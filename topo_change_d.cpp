@@ -109,6 +109,11 @@ void topo_change_d::unregister_vnode(int vm_id, vnode* n, int pnode_id){
 	pnode_list[pnode_id]->unregister_vnode(vm_id, n);
 }
 
+long topo_change_d::pnode_average_bw_usage(int pnode_id){
+	assert(pnode_id < pnode_list.size());
+	return pnode_list[pnode_id]->average_bw_usage();
+}
+
 void topo_change_d::start(){
 	while(1){
 		while(event_list.empty()){

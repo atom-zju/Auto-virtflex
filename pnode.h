@@ -10,12 +10,17 @@ class pnode: public node {
 public:
 	int total_vnodes;
 	int active_vnodes;
+	vnode* owner_vnode;
 	unordered_map<int, vnode*> vnode_map;
-	pnode(int id):node(id) {}
+	pnode(int id):node(id), owner_vnode(NULL) {}
 	~pnode();		
 	void register_vnode(int vm_id, vnode* n);
 	void unregister_vnode(int vm_id, vnode* n);
 	void update_vnode_map(int ts);
+	void pick_owner_vnode(void);
+	void get_owner_vnode_stat(void);
+	long average_bw_usage();
+	void copy_owner_vnode_bw_usage();
 };
 
 #endif

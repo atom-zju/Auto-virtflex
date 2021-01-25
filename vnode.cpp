@@ -29,6 +29,92 @@ void vnode::update_node(unsigned int ts){
 	cout << "target: " << target <<endl;
 	//cout << "enabled: " << enabled <<endl;
 
+	
+	// be carefull not to insert all the vcpus one more time everytime you update node
+	// right now because set doesn't allow duplicates, this problem can be prevented
+	list_xenstore_directory(topod->xs, string(xs_path).append("/vcpu"),tmp_list);
+	for(auto& x: tmp_list){
+		//cout<< "vcpu: " << x <<endl;
+		cpu_set.insert(cpu(stoi(x),true, owner_vm));
+	}
+
+	// calculate low target base on capacity, formula:
+	// low_target = (80*1024 + capacity/1024*17)
+	if(vnode_id == 0){
+		low_target = (80*1024 + capacity/1024*17)+200*1024;
+		low_target += (capacity-low_target)/cpu_set.size();
+	}
+	else{
+		low_target = (80*1024 + capacity/1024*17);
+	}
+	//cout << "low_target: " << low_target << endl;
+
+	
+}
+
+int vnode::shrink(){
+	// 1. set the topo_change flag to be 2, path: /numa/topo_change
+	// 2. change target to low_target 
+	// 3. disable all vcpus
+	enabled = false;
+	change_pnode_owner_xs(false);
+	string topo_change_flag(xs_path.substr(0, xs_path.find_last_of("/\\")));
+	topo_change_flag = topo_change_flag.substr(0, topo_change_flag.find_last_of("/\\"));
+	topo_change_flag.append("/topo_change");
+	cout << "topo_change_flag path: " << topo_change_flag << endl;
+	
+	assert(topod);
+	for(auto& x: cpu_set){
+		if(x.cpuid != 0)
+			x.disable();
+	}
+	write_to_xenstore_path(topod->xs, topo_change_flag,string("2"));
+	write_to_xenstore_path(topod->xs, string(xs_path).append("/target"),to_string(low_target));
+	
+	return 0;	
+}
+
+int vnode::expand(){
+	// 1. set the topo_change flag to be 1, path: /numa/topo_change
+	// 2. change target to capacity
+	// 3. enable all vcpus
+	for(auto& x: cpu_set){
+		if(x.cpuid != 0)
+			x.enable();
+	}
+	enabled = true;
+	string topo_change_flag(xs_path.substr(0, xs_path.find_last_of("/\\")));
+	topo_change_flag = topo_change_flag.substr(0, topo_change_flag.find_last_of("/\\"));
+	topo_change_flag.append("/topo_change");
+	cout << "topo_change_flag path: " << topo_change_flag << endl;
+	assert(topod);
+	write_to_xenstore_path(topod->xs, string(xs_path).append("/target"),to_string(capacity));
+	write_to_xenstore_path(topod->xs, topo_change_flag,string("1"));
+	return 0;
+}
+
+long vnode::average_bw_usage(){
+	if(!enabled)
+		return -1;
+	return topod->pnode_average_bw_usage(pnode_id);
+}
+
+int vnode::active_nodes_in_pnode(){
+	assert(topod->pnode_list.size()>=pnode_id+1);
+	return topod->pnode_list[pnode_id]->active_vnodes;
+}
+
+int vnode::change_pnode_owner_xs(bool own){
+	if (write_to_xenstore_path(topod->xs, xs_path+"/pnode_owner", own? string("1"): string("0")) != 0){
+		cout << "Error when writing to pnode_owner" << endl;
+		return -1;
+	}
+	return 0;
+}
+
+void vnode::read_bw_usage_from_xs(){
+	string tmp;
+	change_pnode_owner_xs(true);
 	// get rd bw usage info
 	int num_chn_rd = 0;
 	do{
@@ -75,85 +161,4 @@ void vnode::update_node(unsigned int ts){
 	
 	assert(num_chn_rd == num_chn_wr);
 	
-	// be carefull not to insert all the vcpus one more time everytime you update node
-	// right now because set doesn't allow duplicates, this problem can be prevented
-	list_xenstore_directory(topod->xs, string(xs_path).append("/vcpu"),tmp_list);
-	for(auto& x: tmp_list){
-		//cout<< "vcpu: " << x <<endl;
-		cpu_set.insert(cpu(stoi(x),true, owner_vm));
-	}
-
-	// calculate low target base on capacity, formula:
-	// low_target = (80*1024 + capacity/1024*17)
-	if(vnode_id == 0){
-		low_target = (80*1024 + capacity/1024*17)+200*1024;
-		low_target += (capacity-low_target)/cpu_set.size();
-	}
-	else{
-		low_target = (80*1024 + capacity/1024*17);
-	}
-	//cout << "low_target: " << low_target << endl;
-
-	
-}
-
-int vnode::shrink(){
-	// 1. set the topo_change flag to be 2, path: /numa/topo_change
-	// 2. change target to low_target 
-	// 3. disable all vcpus
-	enabled = false;
-	string topo_change_flag(xs_path.substr(0, xs_path.find_last_of("/\\")));
-	topo_change_flag = topo_change_flag.substr(0, topo_change_flag.find_last_of("/\\"));
-	topo_change_flag.append("/topo_change");
-	cout << "topo_change_flag path: " << topo_change_flag << endl;
-	
-	assert(topod);
-	for(auto& x: cpu_set){
-		if(x.cpuid != 0)
-			x.disable();
-	}
-	write_to_xenstore_path(topod->xs, topo_change_flag,string("2"));
-	write_to_xenstore_path(topod->xs, string(xs_path).append("/target"),to_string(low_target));
-	
-	return 0;	
-}
-
-int vnode::expand(){
-	// 1. set the topo_change flag to be 1, path: /numa/topo_change
-	// 2. change target to capacity
-	// 3. enable all vcpus
-	for(auto& x: cpu_set){
-		if(x.cpuid != 0)
-			x.enable();
-	}
-	enabled = true;
-	string topo_change_flag(xs_path.substr(0, xs_path.find_last_of("/\\")));
-	topo_change_flag = topo_change_flag.substr(0, topo_change_flag.find_last_of("/\\"));
-	topo_change_flag.append("/topo_change");
-	cout << "topo_change_flag path: " << topo_change_flag << endl;
-	assert(topod);
-	write_to_xenstore_path(topod->xs, string(xs_path).append("/target"),to_string(capacity));
-	write_to_xenstore_path(topod->xs, topo_change_flag,string("1"));
-	return 0;
-}
-
-long vnode::average_bw_usage(){
-	assert(bw_rd.size() == bw_wr.size());
-	if(bw_rd.empty())
-		return -1;
-
-	long bw_usage = 0;
-	for(auto& x: bw_rd){
-		bw_usage+=x;
-	}
-	for(auto& x: bw_wr){
-		bw_usage+=x;
-	}
-	return bw_usage/(bw_rd.size()+ bw_wr.size());
-	
-}
-
-int vnode::active_nodes_in_pnode(){
-	assert(topod->pnode_list.size()>=pnode_id+1);
-	return topod->pnode_list[pnode_id]->active_vnodes;
 }

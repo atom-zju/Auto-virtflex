@@ -37,6 +37,7 @@ private:
 	void process_event(topo_change_event& e);
 	void register_pvnode(int vm_id, vnode* n, int pnode_id);
 	void unregister_vnode(int vm_id, vnode* n, int pnode_id);
+	long pnode_average_bw_usage(int pnode_id);
 
 public:
 	int shrink_vm(int id, int vnode_id);
