@@ -16,12 +16,17 @@ static int  average_bw_changeness(vm* v){
 	unsigned long high_thres = 800;
 	assert(v);
 	long avg_bw = v->average_bw_usage();
+	cout << "TOPO_ENGINE: vm " << v->vm_id << ", avg_bw: " << avg_bw << endl;
 	if(avg_bw < 0 )
 		return 0;
-	if(avg_bw < low_thres && v->active_node > 1)
+	if(avg_bw < low_thres && v->active_node > 1){
+		cout << "\tShrink" << endl;
 		return -1;
-	if(avg_bw > high_thres && v->active_node < v->total_node)
+	}
+	if(avg_bw > high_thres && v->active_node < v->total_node){
+		cout << "\tExpand" << endl;
 		return 1;
+	}
 	return 0;
 }
 

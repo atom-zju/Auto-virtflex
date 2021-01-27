@@ -10,6 +10,7 @@ class pnode: public node {
 public:
 	int total_vnodes;
 	int active_vnodes;
+	long long recent_cpu_usage;
 	vnode* owner_vnode;
 	unordered_map<int, vnode*> vnode_map;
 	pnode(int id):node(id), owner_vnode(NULL) {}

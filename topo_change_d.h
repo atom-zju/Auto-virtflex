@@ -27,6 +27,7 @@ private:
 	vector<pnode*> pnode_list;
 	deque<topo_change_event> event_list;
 	struct xs_handle *xs;
+	xc_interface* xc_handle;
 	unsigned int interval_us;
 	unsigned int ts; // timestamp
 	topo_change_engine* engine;
@@ -38,7 +39,8 @@ private:
 	void register_pvnode(int vm_id, vnode* n, int pnode_id);
 	void unregister_vnode(int vm_id, vnode* n, int pnode_id);
 	long pnode_average_bw_usage(int pnode_id);
-
+	int pnode_num_active_vnode(int pnode_id);
+	long long pnode_cpu_usage(int pnode_id);
 public:
 	int shrink_vm(int id, int vnode_id);
 	int expand_vm(int id, int vnode_id);

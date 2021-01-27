@@ -24,6 +24,7 @@ void pnode::update_vnode_map(int ts){
 	cout << "updating pnode, id: " << pnode_id << endl;
 	active_vnodes = 0;
 	total_vnodes = 0;
+	recent_cpu_usage = 0;
 	for(auto& x: vnode_map){
 		if(x.second->ts < ts){
 			if(x.second == owner_vnode)
@@ -32,6 +33,7 @@ void pnode::update_vnode_map(int ts){
 		}
 		else{
 			total_vnodes++;
+			recent_cpu_usage += x.second->get_recent_vcpu_usage();
 			if(x.second->enabled){
 				active_vnodes++;
 			}

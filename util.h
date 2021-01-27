@@ -6,6 +6,7 @@
 extern "C"
 {
 #include <xenstore.h>
+#include <xenctrl.h>
 }
 
 using namespace std;

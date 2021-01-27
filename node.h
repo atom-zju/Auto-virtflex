@@ -1,7 +1,7 @@
 #ifndef NODE_H
 #define NODE_H
 
-#include <set>
+#include <unordered_map>
 #include <vector>
 #include "cpu.h"
 
@@ -11,7 +11,7 @@ class node{
 public:
 	int pnode_id;
 	int capacity;
-	set<cpu> cpu_set;
+	unordered_map<int, cpu> cpu_map;
 	vector<int> bw_rd;
 	vector<int> bw_wr;
 	unsigned int ts;

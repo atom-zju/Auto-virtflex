@@ -28,6 +28,11 @@ topo_change_d::topo_change_d(){
                 perror("Error when connecting to a xs daemon\n");
                 exit(-1);
         }
+	xc_handle = xc_interface_open(NULL, NULL, 0);
+	if(!xc_handle){
+                perror("xc_interface_open failed");
+                exit(-1);
+        }
 	engine = new topo_change_engine(this);
 	assert(engine);
 	engine->config();
@@ -43,6 +48,7 @@ topo_change_d::~topo_change_d(){
 		delete x;
 	}
 	xs_daemon_close(xs);
+	xc_interface_close(xc_handle);
 	delete engine;
 }
 
@@ -50,7 +56,8 @@ void topo_change_d::update_vm_map(){
 	ts++;
 	vector<string> dir;
 	list_xenstore_directory(xs, string("/local/domain"), dir);
-	cout<<"/local/domain"<< endl;
+	//cout<<"/local/domain"<< endl;
+	cout << "Updating vm_map" << endl;
 	for(auto& x: dir){
 		int vm_id =  stoi(x);
 		cout <<"\t" <<"VM: "<<stoi(x) << endl;
@@ -66,6 +73,7 @@ void topo_change_d::update_vm_map(){
 	}
 	
 	// delete obsolete vm
+	cout << "Deleting obsolete vm" << endl;
 	for(auto& x: vm_map){
 		auto v = x.second;
 		if(v->ts < ts){
@@ -73,7 +81,9 @@ void topo_change_d::update_vm_map(){
 			vm_map.erase(x.first);
 		}
 	}
-
+	
+	// update pnode info
+	cout << "Updating pnode_list" << endl;
 	for(auto& x: pnode_list){
 		x->update_vnode_map(ts);
 	}
@@ -112,6 +122,15 @@ void topo_change_d::unregister_vnode(int vm_id, vnode* n, int pnode_id){
 long topo_change_d::pnode_average_bw_usage(int pnode_id){
 	assert(pnode_id < pnode_list.size());
 	return pnode_list[pnode_id]->average_bw_usage();
+}
+
+int topo_change_d::pnode_num_active_vnode(int pnode_id){
+	assert(pnode_id < pnode_list.size());
+	return pnode_list[pnode_id]->active_vnodes;
+}
+long long topo_change_d::pnode_cpu_usage(int pnode_id){
+	assert(pnode_id < pnode_list.size());
+	return pnode_list[pnode_id]->recent_cpu_usage;
 }
 
 void topo_change_d::start(){

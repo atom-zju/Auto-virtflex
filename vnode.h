@@ -23,6 +23,7 @@ public:
 	int expand();
 	
 	long average_bw_usage();
+	long long get_recent_vcpu_usage();
 	int active_nodes_in_pnode();
 	void read_bw_usage_from_xs();
 	int change_pnode_owner_xs(bool own);

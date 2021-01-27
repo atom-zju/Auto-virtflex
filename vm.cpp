@@ -31,7 +31,7 @@ void vm::update_vnode_map(unsigned int ts){
 	
 	cout << node_path <<endl;
 	for(auto& x: dir){
-		cout<< "\t"<< x << endl;
+		//cout<< "\t"<< x << endl;
 		int node_id = stoi(x);
 		if(vnode_map.find(node_id) == vnode_map.end()){
 			vnode* v =  new vnode(node_id, string(node_path).append("/").append(x), this, topod);
