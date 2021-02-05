@@ -77,6 +77,15 @@ void pnode::copy_owner_vnode_bw_usage(){
 	assert(owner_vnode);
 	bw_rd = owner_vnode->bw_rd;
 	bw_wr = owner_vnode->bw_wr;
+	bw_rd_history.push_back(make_pair(owner_vnode->ts, bw_rd));
+	bw_wr_history.push_back(make_pair(owner_vnode->ts, bw_wr));
+
+	if(bw_rd_history.size()> history_len){
+		bw_rd_history.pop_front();
+	}
+	if(bw_wr_history.size()> history_len){
+		bw_wr_history.pop_front();
+	}
 }
 
 long pnode::average_bw_usage(){

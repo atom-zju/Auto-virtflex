@@ -22,6 +22,7 @@ class topo_change_d {
 	friend class vnode;
 	friend class cpu;
 	friend class topo_change_engine;
+	friend class vm_logger;
 private:
 	unordered_map<int, vm*> vm_map;
 	vector<pnode*> pnode_list;

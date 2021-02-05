@@ -3,10 +3,12 @@
 
 #include <unordered_map>
 #include "vnode.h"
+//#include "vm_logger.h"
 //#include "topo_change_d.h"
 using namespace std;
 
 class topo_change_d;
+class vm_logger;
 
 class vm{
 
@@ -19,6 +21,7 @@ public:
 	int active_node;
 	topo_change_d* topod;
 	unsigned int ts;
+	vm_logger* logger;
 
 	vnode* get_vnode_by_id(int id);
 	int add_vnode(vnode*);
@@ -33,7 +36,7 @@ public:
 	void active_node_list(vector<int>& v);
 	void inactive_node_list(vector<int>& v);
 	
-	vm(int id, topo_change_d* d,string s): xs_path(s), topod(d), vm_id(id), vcpu_path(s+"/cpu"){}
+	vm(int id, topo_change_d* d,string s);
 	~vm(); // free vnode_map pointers
 
 };

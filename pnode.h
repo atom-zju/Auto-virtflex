@@ -1,10 +1,14 @@
 #ifndef PNODE_H
 #define PNODE_H
 #include <unordered_map>
+#include <vector>
+#include <deque>
 #include "node.h"
 #include "vnode.h"
 
 using namespace std;
+
+#define HISTORY_LEN 10
 
 class pnode: public node {
 public:
@@ -13,7 +17,10 @@ public:
 	long long recent_cpu_usage;
 	vnode* owner_vnode;
 	unordered_map<int, vnode*> vnode_map;
-	pnode(int id):node(id), owner_vnode(NULL) {}
+        int history_len;
+	deque<pair<int, vector<int>>> bw_rd_history; // <timestamp, bw_measure for each channel>
+        deque<pair<int, vector<int>>> bw_wr_history; // <timestamp, bw_measure for each channel>
+	pnode(int id):node(id), owner_vnode(NULL), history_len(HISTORY_LEN) {}
 	~pnode();		
 	void register_vnode(int vm_id, vnode* n);
 	void unregister_vnode(int vm_id, vnode* n);

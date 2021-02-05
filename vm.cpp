@@ -2,15 +2,15 @@
 #include<vector>
 #include<cassert>
 #include "vm.h"
+#include "vm_logger.h"
 #include "topo_change_d.h"
 
 using namespace std;
 
-vnode* vm::get_vnode_by_id(int id){
-	if(vnode_map.find(id) != vnode_map.end()){
-		return vnode_map[id];
-	}
-	return NULL;
+vm::vm(int id, topo_change_d* d,string s): xs_path(s), topod(d), vm_id(id), vcpu_path(s+"/cpu"){
+	logger = new vm_logger("vm_"+to_string(vm_id)+"_log.txt", this);
+	assert(logger);
+	logger->init();
 }
 
 vm::~vm(){
@@ -19,7 +19,16 @@ vm::~vm(){
 		topod->unregister_vnode(vm_id, x.second, x.second->pnode_id);
 		delete x.second;
 	}
+	if(logger)
+		delete logger;
 	cout << "vm: " << vm_id << " terminated." << endl;
+}
+
+vnode* vm::get_vnode_by_id(int id){
+	if(vnode_map.find(id) != vnode_map.end()){
+		return vnode_map[id];
+	}
+	return NULL;
 }
 
 void vm::update_vnode_map(unsigned int ts){

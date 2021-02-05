@@ -7,6 +7,7 @@
 #include "topo_change_d.h"
 #include "util.h"
 #include "topo_change_engine.h"
+#include "vm_logger.h"
 
 using namespace std;
 
@@ -82,10 +83,18 @@ void topo_change_d::update_vm_map(){
 		}
 	}
 	
-	// update pnode info
+	// update pnode info, after this function the pnode bw information is available.
 	cout << "Updating pnode_list" << endl;
 	for(auto& x: pnode_list){
 		x->update_vnode_map(ts);
+	}
+	
+	// log vm stats
+	for(auto& x: vm_map){
+		if(x.first!=0){
+			auto v = x.second;
+			v->logger->log();
+		}
 	}
 
 }
