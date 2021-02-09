@@ -17,10 +17,17 @@ public:
 	long long recent_cpu_usage;
 	vnode* owner_vnode;
 	unordered_map<int, vnode*> vnode_map;
-        int history_len;
-	deque<pair<int, vector<int>>> bw_rd_history; // <timestamp, bw_measure for each channel>
-        deque<pair<int, vector<int>>> bw_wr_history; // <timestamp, bw_measure for each channel>
-	pnode(int id):node(id), owner_vnode(NULL), history_len(HISTORY_LEN) {}
+	
+	/* For the recording of bw history, use a deque of samples for each of the memory channel.
+		Each sample has a time stamp (long long) and the bw measure (int). All the samples
+		are sorted in chronological order. If the deque execeed the capacity, it will
+		evict the oldest sample.
+	*/
+	//vector<deque<pair<long long, int>>> bw_rd_channel_sample; 
+	//vector<deque<pair<long long, int>>> bw_wr_channel_sample;
+	//int max_sample_count;
+	 
+	pnode(int id):node(id), owner_vnode(NULL) {}
 	~pnode();		
 	void register_vnode(int vm_id, vnode* n);
 	void unregister_vnode(int vm_id, vnode* n);

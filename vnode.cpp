@@ -131,53 +131,126 @@ int vnode::change_pnode_owner_xs(bool own){
 	return 0;
 }
 
+/*
+        xenstore stats directory structure:
+                numa/node/<node_id>/bw_usage_rd_0/curr_sample_num
+                                                 /sample0
+                                                 /sample0_ts
+                                                 /sample1
+                                                 /sample1_ts
+                                                 ......
+*/
+
+/*
+	deque<pair<long long, int>>& samples are sorted in chronological order with the earliest sample in front
+	This return_insert_index returns the idx the sample need to be inserted, and returns -1 if already have
+	samples of the same timestamps
+*/
+
+static int return_insert_index(deque<pair<long long, int>>& samples, int lo, int hi, long long timestamp){
+	if(samples.empty())
+		return 0;
+	if(lo == hi){
+		if(samples[lo].first == timestamp)
+			return -1;
+		else if( timestamp < samples[lo].first)
+			return lo;
+		else
+			return lo+1;
+	}
+	int mid = (hi - lo)/2 + lo;
+	if (samples[mid].first == timestamp){
+			return -1;
+	}
+	else if (timestamp < samples[mid].first){
+		if(mid == lo)
+			return return_insert_index(samples, lo, mid, timestamp);
+		else
+			return return_insert_index(samples, lo, mid-1, timestamp);
+	}
+	else{
+		if(mid == hi)
+			return return_insert_index(samples, mid, hi, timestamp);
+		else
+			return return_insert_index(samples, mid+1, hi, timestamp);
+	}
+}
+
+
+
+static void crawl_bw_samples_from_xs(struct xs_handle * xs, string dir, deque<pair<long long, int>>& samples, int max_sample_size){
+	string val_str;
+	string timestamp_str;
+	int sample_cnt = 0;
+	do{
+		if(read_from_xenstore_path(xs, dir+"/sample"+to_string(sample_cnt), val_str) == 0){
+			if(read_from_xenstore_path(xs, dir+"/sample"+to_string(sample_cnt)+"_ts", timestamp_str) == 0){
+				long long ts;
+				int val;
+				try{
+					ts = stoll(timestamp_str);
+					val = stoi(val_str);
+				}
+				catch(...){
+					cerr << "stoll or stoi error in crawl_bw_samples_from_xs" << endl;
+					sample_cnt++;
+					continue;
+				}
+				int idx =  return_insert_index(samples, 0, samples.size()-1, ts);
+				if(idx >= 0)
+					samples.insert(samples.begin()+ idx, make_pair(ts, val));
+				if(samples.size() > max_sample_size)
+					samples.pop_front();
+			}
+		}
+		else{
+			break;
+		}
+		sample_cnt++;
+	} while(1);
+
+}
+
+
 void vnode::read_bw_usage_from_xs(){
 	string tmp;
 	change_pnode_owner_xs(true);
-	// get rd bw usage info
+	/* get rd bw usage info */
 	cout << "Read_bw_usage_from_xs: pnode: "  << pnode_id << " vnode: " << vnode_id <<endl;
 	int num_chn_rd = 0;
 	do{
 		string chn_name("/bw_usage_");
 		chn_name.append(to_string(num_chn_rd)).append("_rd");
 		
-		if(read_from_xenstore_path(topod->xs, string(xs_path).append(chn_name), tmp) == 0){
-			if(num_chn_rd == bw_rd.size()){
-				bw_rd.push_back(stoi(tmp));
+		if(read_from_xenstore_path(topod->xs, string(xs_path)+chn_name+"/curr_sample_num", tmp) == 0){
+			if(bw_rd_channel_sample.size() == num_chn_rd){
+				bw_rd_channel_sample.resize(num_chn_rd+1);
 			}
-			else{
-				bw_rd[num_chn_rd] = stoi(tmp);
-			}
-			cout << "\t" << chn_name << ": "  << bw_rd[num_chn_rd] <<endl;
+			crawl_bw_samples_from_xs(topod->xs, string(xs_path)+chn_name, bw_rd_channel_sample[num_chn_rd], max_sample_size);
 		}
 		else{
 			break;
 		}
 		num_chn_rd++;
 	}while(1);	
-	bw_rd.resize(num_chn_rd);
 		
-	// get wr bw usage info
+	/* get wr bw usage info */
 	int num_chn_wr = 0;
 	do{
 		string chn_name("/bw_usage_");
 		chn_name.append(to_string(num_chn_wr)).append("_wr");
 		
-		if(read_from_xenstore_path(topod->xs, string(xs_path).append(chn_name), tmp) == 0){
-			if(num_chn_wr == bw_wr.size()){
-				bw_wr.push_back(stoi(tmp));
-			}
-			else{
-				bw_wr[num_chn_wr] = stoi(tmp);
-			}
-			cout << "\t" << chn_name << ": "  << bw_wr[num_chn_wr] <<endl;
+		if(read_from_xenstore_path(topod->xs, string(xs_path)+chn_name+"/curr_sample_num", tmp) == 0){
+			if(bw_wr_channel_sample.size() == num_chn_wr){
+                                bw_wr_channel_sample.resize(num_chn_wr+1);
+                        }
+                        crawl_bw_samples_from_xs(topod->xs, string(xs_path)+chn_name, bw_wr_channel_sample[num_chn_wr], max_sample_size);
 		}
 		else{
 			break;
 		}
 		num_chn_wr++;
 	}while(1);	
-	bw_wr.resize(num_chn_wr);
 	
 	assert(num_chn_rd == num_chn_wr);
 	

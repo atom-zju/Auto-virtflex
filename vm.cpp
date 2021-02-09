@@ -8,7 +8,7 @@
 using namespace std;
 
 vm::vm(int id, topo_change_d* d,string s): xs_path(s), topod(d), vm_id(id), vcpu_path(s+"/cpu"){
-	logger = new vm_logger("vm_"+to_string(vm_id)+"_log.txt", this);
+	logger = new vm_logger("log/vm_"+to_string(vm_id)+"_log.txt", this);
 	assert(logger);
 	logger->init();
 }

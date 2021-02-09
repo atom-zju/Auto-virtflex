@@ -75,32 +75,39 @@ void pnode::get_owner_vnode_stat(){
 
 void pnode::copy_owner_vnode_bw_usage(){
 	assert(owner_vnode);
-	bw_rd = owner_vnode->bw_rd;
-	bw_wr = owner_vnode->bw_wr;
-	bw_rd_history.push_back(make_pair(owner_vnode->ts, bw_rd));
-	bw_wr_history.push_back(make_pair(owner_vnode->ts, bw_wr));
-
-	if(bw_rd_history.size()> history_len){
-		bw_rd_history.pop_front();
-	}
-	if(bw_wr_history.size()> history_len){
-		bw_wr_history.pop_front();
-	}
+	bw_rd_channel_sample = owner_vnode->bw_rd_channel_sample;
+	bw_wr_channel_sample = owner_vnode->bw_wr_channel_sample;
 }
 
 long pnode::average_bw_usage(){
 	if(!owner_vnode)
 		return -1;
-	assert(bw_rd.size() == bw_wr.size());
-        if(bw_rd.empty())
-                return -1;
+	if(bw_rd_channel_sample.empty() || bw_wr_channel_sample.empty()
+		|| bw_rd_channel_sample[0].empty() || bw_wr_channel_sample[0].empty()){
+		return -1;
+	}
+	long long valid_ts_ms = bw_rd_channel_sample[0].back().first - VALID_SAMPLE_INTERVAL_MS;
+	int valid_count = 0;
+	long sum = 0;
+	for(auto& y: bw_rd_channel_sample){
+		for(auto& x: y){
+			if (x.first >= valid_ts_ms){
+				valid_count++;
+				sum+=x.second;
+			}
+		}
+	}
 
-        long bw_usage = 0;
-        for(auto& x: bw_rd){
-                bw_usage+=x;
+        for(auto& y: bw_wr_channel_sample){
+		for(auto& x: y){
+                	if (x.first >= valid_ts_ms){
+                        	valid_count++;
+                        	sum+=x.second;
+                	}
+		}
         }
-        for(auto& x: bw_wr){
-                bw_usage+=x;
-        }
-        return bw_usage/(bw_rd.size()+ bw_wr.size());
+
+	if(valid_count == 0)
+		return -1;
+	return sum/valid_count;
 }
