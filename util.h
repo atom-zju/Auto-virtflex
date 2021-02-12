@@ -7,6 +7,7 @@ extern "C"
 {
 #include <xenstore.h>
 #include <xenctrl.h>
+#include <libxl.h>
 }
 
 using namespace std;

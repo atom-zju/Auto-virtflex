@@ -7,7 +7,7 @@
 #include "cpu.h"
 
 #define MAX_SAMPLE_SIZE 10
-#define VALID_SAMPLE_INTERVAL_MS 2000
+#define VALID_SAMPLE_INTERVAL_MS 10000
 
 using namespace std; 
 

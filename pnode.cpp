@@ -86,28 +86,24 @@ long pnode::average_bw_usage(){
 		|| bw_rd_channel_sample[0].empty() || bw_wr_channel_sample[0].empty()){
 		return -1;
 	}
-	long long valid_ts_ms = bw_rd_channel_sample[0].back().first - VALID_SAMPLE_INTERVAL_MS;
-	int valid_count = 0;
+	//long long valid_ts_ms = (time(0) - start_time)*1000 - VALID_SAMPLE_INTERVAL_MS;
+	int sample_count = 0;
 	long sum = 0;
 	for(auto& y: bw_rd_channel_sample){
+		sample_count += y.size();
 		for(auto& x: y){
-			if (x.first >= valid_ts_ms){
-				valid_count++;
-				sum+=x.second;
-			}
+			sum+=x.second;
 		}
 	}
 
         for(auto& y: bw_wr_channel_sample){
+		sample_count += y.size();
 		for(auto& x: y){
-                	if (x.first >= valid_ts_ms){
-                        	valid_count++;
-                        	sum+=x.second;
-                	}
+                       sum+=x.second;
 		}
         }
 
-	if(valid_count == 0)
+	if(sample_count == 0)
 		return -1;
-	return sum/valid_count;
+	return sum/sample_count;
 }

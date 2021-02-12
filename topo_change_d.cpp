@@ -34,6 +34,17 @@ topo_change_d::topo_change_d(){
                 perror("xc_interface_open failed");
                 exit(-1);
         }
+	xl_logger = xtl_createlogger_stdiostream(stderr, XTL_PROGRESS,
+                    XTL_STDIOSTREAM_PROGRESS_USE_CR);
+	if(!xl_logger){
+                perror("Error in libxl_ctx_alloc");
+                exit(-1);
+        }
+	libxl_ctx_alloc(&xl_handle, LIBXL_VERSION, 0 , (xentoollog_logger*)xl_logger);
+        if(!xl_handle){
+                perror("Error in libxl_ctx_alloc");
+                exit(-1);
+        }
 	engine = new topo_change_engine(this);
 	assert(engine);
 	engine->config();
@@ -50,6 +61,8 @@ topo_change_d::~topo_change_d(){
 	}
 	xs_daemon_close(xs);
 	xc_interface_close(xc_handle);
+        libxl_ctx_free(xl_handle);
+        xtl_logger_destroy((xentoollog_logger*)xl_logger);
 	delete engine;
 }
 

@@ -16,7 +16,9 @@ static int  average_bw_changeness(vm* v){
 	unsigned long high_thres = 800;
 	assert(v);
 	long avg_bw = v->average_bw_usage();
+	float avg_load = v->get_average_vcpu_load();
 	cout << "TOPO_ENGINE: vm " << v->vm_id << ", avg_bw: " << avg_bw << endl;
+	cout << "TOPO_ENGINE: vm " << v->vm_id << ", avg_load: " << avg_load << endl;
 	if(avg_bw < 0 )
 		return 0;
 	if(avg_bw < low_thres && v->active_node > 1){

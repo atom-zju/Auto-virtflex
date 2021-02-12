@@ -1,5 +1,6 @@
 #include "vnode.h"
 #include "topo_change_d.h"
+#include <time.h>
 #include <iostream>
 #include <cassert>
 
@@ -33,13 +34,16 @@ void vnode::update_node(unsigned int ts){
 	// be carefull not to insert all the vcpus one more time everytime you update node
 	// right now because set doesn't allow duplicates, this problem can be prevented
 	list_xenstore_directory(topod->xs, string(xs_path).append("/vcpu"),tmp_list);
+	struct timeval now;
+	gettimeofday(&now, NULL);
 	for(auto& x: tmp_list){
 		//cout<< "vcpu: " << x <<endl;
 		//cpu_set.insert(cpu(stoi(x),true, owner_vm));
 		if(cpu_map.find(stoi(x)) == cpu_map.end()){
 			cpu_map[stoi(x)] = cpu(stoi(x),true, owner_vm);
+			cpu_map[stoi(x)].init(&now);
 		}
-		cpu_map[stoi(x)].update_usage();
+		cpu_map[stoi(x)].update_usage(&now);
 	}
 
 	// calculate low target base on capacity, formula:
@@ -123,6 +127,14 @@ long long vnode::get_recent_vcpu_usage(){
 	return usg;
 }
 
+float vnode::get_average_vcpu_load(){
+	float res = 0;
+	for(auto& x: cpu_map){
+		res += x.second.recent_usage_percent;
+	}
+	return res/(float)cpu_map.size();
+}
+
 int vnode::change_pnode_owner_xs(bool own){
 	if (write_to_xenstore_path(topod->xs, xs_path+"/pnode_owner", own? string("1"): string("0")) != 0){
 		cout << "Error when writing to pnode_owner" << endl;
@@ -178,7 +190,7 @@ static int return_insert_index(deque<pair<long long, int>>& samples, int lo, int
 
 
 
-static void crawl_bw_samples_from_xs(struct xs_handle * xs, string dir, deque<pair<long long, int>>& samples, int max_sample_size){
+static void crawl_bw_samples_from_xs(struct xs_handle * xs, string dir, deque<pair<long long, int>>& samples, int max_sample_size, long long valid_ts){
 	string val_str;
 	string timestamp_str;
 	int sample_cnt = 0;
@@ -193,6 +205,10 @@ static void crawl_bw_samples_from_xs(struct xs_handle * xs, string dir, deque<pa
 				}
 				catch(...){
 					cerr << "stoll or stoi error in crawl_bw_samples_from_xs" << endl;
+					sample_cnt++;
+					continue;
+				}
+				if(ts < valid_ts){
 					sample_cnt++;
 					continue;
 				}
@@ -218,6 +234,7 @@ void vnode::read_bw_usage_from_xs(){
 	/* get rd bw usage info */
 	cout << "Read_bw_usage_from_xs: pnode: "  << pnode_id << " vnode: " << vnode_id <<endl;
 	int num_chn_rd = 0;
+	long long valid_ts_ms = (time(0) - owner_vm->start_time)*1000 - VALID_SAMPLE_INTERVAL_MS;
 	do{
 		string chn_name("/bw_usage_");
 		chn_name.append(to_string(num_chn_rd)).append("_rd");
@@ -226,7 +243,7 @@ void vnode::read_bw_usage_from_xs(){
 			if(bw_rd_channel_sample.size() == num_chn_rd){
 				bw_rd_channel_sample.resize(num_chn_rd+1);
 			}
-			crawl_bw_samples_from_xs(topod->xs, string(xs_path)+chn_name, bw_rd_channel_sample[num_chn_rd], max_sample_size);
+			crawl_bw_samples_from_xs(topod->xs, string(xs_path)+chn_name, bw_rd_channel_sample[num_chn_rd], max_sample_size, valid_ts_ms);
 		}
 		else{
 			break;
@@ -244,7 +261,7 @@ void vnode::read_bw_usage_from_xs(){
 			if(bw_wr_channel_sample.size() == num_chn_wr){
                                 bw_wr_channel_sample.resize(num_chn_wr+1);
                         }
-                        crawl_bw_samples_from_xs(topod->xs, string(xs_path)+chn_name, bw_wr_channel_sample[num_chn_wr], max_sample_size);
+                        crawl_bw_samples_from_xs(topod->xs, string(xs_path)+chn_name, bw_wr_channel_sample[num_chn_wr], max_sample_size, valid_ts_ms);
 		}
 		else{
 			break;

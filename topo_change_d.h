@@ -29,6 +29,8 @@ private:
 	deque<topo_change_event> event_list;
 	struct xs_handle *xs;
 	xc_interface* xc_handle;
+	libxl_ctx *xl_handle;
+	xentoollog_logger_stdiostream *xl_logger;
 	unsigned int interval_us;
 	unsigned int ts; // timestamp
 	topo_change_engine* engine;

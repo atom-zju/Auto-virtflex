@@ -21,6 +21,7 @@ public:
 	int active_node;
 	topo_change_d* topod;
 	unsigned int ts;
+	uint32_t start_time;
 	vm_logger* logger;
 
 	vnode* get_vnode_by_id(int id);
@@ -32,6 +33,7 @@ public:
 	
 	void update_vnode_map(unsigned int ts);
 	long average_bw_usage();
+	float get_average_vcpu_load();
 	
 	void active_node_list(vector<int>& v);
 	void inactive_node_list(vector<int>& v);

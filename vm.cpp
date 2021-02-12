@@ -8,6 +8,7 @@
 using namespace std;
 
 vm::vm(int id, topo_change_d* d,string s): xs_path(s), topod(d), vm_id(id), vcpu_path(s+"/cpu"){
+	start_time = libxl_vm_get_start_time(topod->xl_handle, vm_id);
 	logger = new vm_logger("log/vm_"+to_string(vm_id)+"_log.txt", this);
 	assert(logger);
 	logger->init();
@@ -104,6 +105,18 @@ long vm::average_bw_usage(){
 	}
 	return cnt>0? bw_usage/cnt: -1;
 	
+}
+
+float vm::get_average_vcpu_load(){
+	float res = 0;
+	int cnt = 0;
+	for(auto& x: vnode_map){
+		if(!(x.second->enabled))
+			continue;
+		res+= x.second->get_average_vcpu_load();
+		cnt++;
+	}
+	return cnt>0? res/cnt: 0.0;
 }
 
 void vm::active_node_list(vector<int>& v){
