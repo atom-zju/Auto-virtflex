@@ -2,7 +2,9 @@
 #include <cstdlib>
 #include <cstdio>
 #include <cstring>
+#include <iostream>
 
+using namespace std;
 
 int write_to_xenstore_path(struct xs_handle* xs, const string path, const string value){
 	
@@ -68,3 +70,85 @@ int list_xenstore_directory(struct xs_handle* xs, const string path, vector<stri
 	return 0;
 
 }
+
+/*
+        xenstore stats directory structure:
+                numa/node/<node_id>/bw_usage_rd_0/curr_sample_num
+                                                 /sample0
+                                                 /sample0_ts
+                                                 /sample1
+                                                 /sample1_ts
+                                                 ......
+*/
+
+/*
+	deque<pair<long long, int>>& samples are sorted in chronological order with the earliest sample in front
+	This return_insert_index returns the idx the sample need to be inserted, and returns -1 if already have
+	samples of the same timestamps
+*/
+
+int return_insert_index(deque<pair<long long, int>>& samples, int lo, int hi, long long timestamp){
+	if(samples.empty())
+		return 0;
+	if(lo == hi){
+		if(samples[lo].first == timestamp)
+			return -1;
+		else if( timestamp < samples[lo].first)
+			return lo;
+		else
+			return lo+1;
+	}
+	int mid = (hi - lo)/2 + lo;
+	if (samples[mid].first == timestamp){
+			return -1;
+	}
+	else if (timestamp < samples[mid].first){
+		if(mid == lo)
+			return return_insert_index(samples, lo, mid, timestamp);
+		else
+			return return_insert_index(samples, lo, mid-1, timestamp);
+	}
+	else{
+		if(mid == hi)
+			return return_insert_index(samples, mid, hi, timestamp);
+		else
+			return return_insert_index(samples, mid+1, hi, timestamp);
+	}
+}
+
+
+
+void crawl_bw_samples_from_xs(struct xs_handle * xs, string dir, deque<pair<long long, int>>& samples, int max_sample_size){
+	string val_str;
+	string timestamp_str;
+	int sample_cnt = 0;
+	do{
+		if(read_from_xenstore_path(xs, dir+"/sample"+to_string(sample_cnt), val_str) == 0){
+			if(read_from_xenstore_path(xs, dir+"/sample"+to_string(sample_cnt)+"_ts", timestamp_str) == 0){
+				long long ts;
+				int val;
+				try{
+					ts = stoll(timestamp_str);
+					val = stoi(val_str);
+				}
+				catch(...){
+					cerr << "stoll or stoi error in crawl_bw_samples_from_xs" << endl;
+					sample_cnt++;
+					continue;
+				}
+				int idx =  return_insert_index(samples, 0, samples.size()-1, ts);
+				if(idx >= 0)
+					samples.insert(samples.begin()+ idx, make_pair(ts, val));
+				if(samples.size() > max_sample_size)
+					samples.pop_front();
+			}
+		}
+		else{
+			break;
+		}
+		sample_cnt++;
+	} while(1);
+
+}
+
+

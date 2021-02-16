@@ -31,6 +31,26 @@ static int  average_bw_changeness(vm* v){
 	}
 	return 0;
 }
+static int  average_vcpu_load_changeness(vm* v){
+	float low_thres = 0.1;
+	float high_thres = 0.5;
+	assert(v);
+	long avg_bw = v->average_bw_usage();
+	float avg_load = v->get_average_vcpu_load();
+	cout << "TOPO_ENGINE: vm " << v->vm_id << ", avg_bw: " << avg_bw << endl;
+	cout << "TOPO_ENGINE: vm " << v->vm_id << ", avg_load: " << avg_load << endl;
+	if(avg_load < 0 )
+		return 0;
+	if(avg_load < low_thres && v->active_node > 1){
+		cout << "\t------SHRINK-----" << endl;
+		return -1;
+	}
+	if(avg_load > high_thres && v->active_node < v->total_node){
+		cout << "\t++++++EXPAND+++++" << endl;
+		return 1;
+	}
+	return 0;
+}
 
 struct comp_pair{
 	bool operator()(pair<long, int>& l, pair<long, int>& r){
@@ -126,7 +146,8 @@ static int first_available_candidate(vm* v, int num, vector<int>& can){
 }
 
 void topo_change_engine::config(){
-	topo_changeness = &average_bw_changeness;
+	//topo_changeness = &average_bw_changeness;
+	topo_changeness = &average_vcpu_load_changeness;
 	shrink_candidate = &lowest_bw_candidate;
 	expand_candidate = &first_available_candidate; 
 

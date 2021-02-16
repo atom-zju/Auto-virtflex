@@ -24,6 +24,9 @@ public:
 	uint32_t start_time;
 	vm_logger* logger;
 
+        vector<deque<pair<long long, int>>> num_thread_sample;
+        int max_sample_size;
+
 	vnode* get_vnode_by_id(int id);
 	int add_vnode(vnode*);
 	int remove_vnode(int id);
