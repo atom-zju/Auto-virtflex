@@ -22,6 +22,6 @@ int list_xenstore_directory(struct xs_handle* xs, const string path, vector<stri
 
 int return_insert_index(deque<pair<long long, int>>& samples, int lo, int hi, long long timestamp);
 
-void crawl_bw_samples_from_xs(struct xs_handle * xs, string dir, deque<pair<long long, int>>& samples, int max_sample_size);
+void crawl_bw_samples_from_xs(struct xs_handle * xs, string dir, deque<pair<long long, int>>& samples, int max_sample_size, long long start_time_ms);
 
 #endif

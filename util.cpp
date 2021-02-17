@@ -118,7 +118,7 @@ int return_insert_index(deque<pair<long long, int>>& samples, int lo, int hi, lo
 
 
 
-void crawl_bw_samples_from_xs(struct xs_handle * xs, string dir, deque<pair<long long, int>>& samples, int max_sample_size){
+void crawl_bw_samples_from_xs(struct xs_handle * xs, string dir, deque<pair<long long, int>>& samples, int max_sample_size, long long start_time_ms){
 	string val_str;
 	string timestamp_str;
 	int sample_cnt = 0;
@@ -136,6 +136,7 @@ void crawl_bw_samples_from_xs(struct xs_handle * xs, string dir, deque<pair<long
 					sample_cnt++;
 					continue;
 				}
+				ts+= start_time_ms;
 				int idx =  return_insert_index(samples, 0, samples.size()-1, ts);
 				if(idx >= 0)
 					samples.insert(samples.begin()+ idx, make_pair(ts, val));

@@ -146,8 +146,8 @@ static int first_available_candidate(vm* v, int num, vector<int>& can){
 }
 
 void topo_change_engine::config(){
-	//topo_changeness = &average_bw_changeness;
-	topo_changeness = &average_vcpu_load_changeness;
+	topo_changeness = &average_bw_changeness;
+	//topo_changeness = &average_vcpu_load_changeness;
 	shrink_candidate = &lowest_bw_candidate;
 	expand_candidate = &first_available_candidate; 
 

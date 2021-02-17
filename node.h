@@ -3,11 +3,9 @@
 
 #include <unordered_map>
 #include <vector>
-#include <deque>
+#include "sample_queue.h"
 #include "cpu.h"
 
-#define MAX_SAMPLE_SIZE 10
-#define VALID_SAMPLE_INTERVAL_MS 10000
 
 using namespace std; 
 
@@ -24,15 +22,17 @@ public:
                 are sorted in chronological order. If the deque execeed the capacity, it will
                 evict the oldest sample.
         */
-        vector<deque<pair<long long, int>>> bw_rd_channel_sample;
-        vector<deque<pair<long long, int>>> bw_wr_channel_sample;
-	int max_sample_size;
+        //vector<deque<pair<long long, int>>> bw_rd_channel_sample;
+        //vector<deque<pair<long long, int>>> bw_wr_channel_sample;
+	//int max_sample_size;
+	vector<sample_queue*> bw_rd_channel_sample;
+	vector<sample_queue*> bw_wr_channel_sample;
 
 	unsigned int ts;
 
-	node(int id): pnode_id(id), max_sample_size(MAX_SAMPLE_SIZE) {}
-	node(): max_sample_size(MAX_SAMPLE_SIZE) {}
-
+	node(int id): pnode_id(id) {}
+	node() {}
+	~node();
 };
 
 

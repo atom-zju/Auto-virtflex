@@ -75,31 +75,58 @@ void pnode::get_owner_vnode_stat(){
 
 void pnode::copy_owner_vnode_bw_usage(){
 	assert(owner_vnode);
-	bw_rd_channel_sample = owner_vnode->bw_rd_channel_sample;
-	bw_wr_channel_sample = owner_vnode->bw_wr_channel_sample;
+	/* 1. create sample queue
+	   2. merge samples from vnode sample queue */
+	int last_channel = bw_rd_channel_sample.size()-1;
+	while(bw_rd_channel_sample.size() < owner_vnode->bw_rd_channel_sample.size()){
+		bw_rd_channel_sample.push_back(new sample_queue(
+				owner_vnode->bw_rd_channel_sample[last_channel+1]->name,
+				NULL,
+				owner_vnode->bw_rd_channel_sample[last_channel+1]->name));	
+		last_channel++;
+	}
+	for(int i=0; i < bw_rd_channel_sample.size(); i++){
+		assert(bw_rd_channel_sample[i]);
+		bw_rd_channel_sample[i]->merge_sample_queue(
+				owner_vnode->bw_rd_channel_sample[i]);
+	}
+	last_channel = bw_wr_channel_sample.size()-1;
+	while(bw_wr_channel_sample.size() < owner_vnode->bw_wr_channel_sample.size()){
+                bw_wr_channel_sample.push_back(new sample_queue(
+				owner_vnode->bw_wr_channel_sample[last_channel+1]->name,
+				NULL,
+				owner_vnode->bw_wr_channel_sample[last_channel+1]->name));
+		last_channel++;
+        }
+        for(int i=0; i < bw_wr_channel_sample.size(); i++){
+		assert(bw_wr_channel_sample[i]);
+                bw_wr_channel_sample[i]->merge_sample_queue(
+                                owner_vnode->bw_wr_channel_sample[i]);
+        }
+
 }
 
 long pnode::average_bw_usage(){
 	if(!owner_vnode)
 		return -1;
-	if(bw_rd_channel_sample.empty() || bw_wr_channel_sample.empty()
-		|| bw_rd_channel_sample[0].empty() || bw_wr_channel_sample[0].empty()){
+	if(bw_rd_channel_sample.empty() || bw_wr_channel_sample.empty()){
 		return -1;
 	}
-	//long long valid_ts_ms = (time(0) - start_time)*1000 - VALID_SAMPLE_INTERVAL_MS;
 	int sample_count = 0;
 	long sum = 0;
 	for(auto& y: bw_rd_channel_sample){
-		sample_count += y.size();
-		for(auto& x: y){
-			sum+=x.second;
+		int avg = y->average_value_from_ts(0);
+		if(avg >= 0){
+			sum+= avg;
+			sample_count++;
 		}
 	}
 
         for(auto& y: bw_wr_channel_sample){
-		sample_count += y.size();
-		for(auto& x: y){
-                       sum+=x.second;
+		int avg = y->average_value_from_ts(0);
+		if(avg >= 0){
+			sum+= avg;
+			sample_count++;
 		}
         }
 
