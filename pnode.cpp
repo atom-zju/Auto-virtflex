@@ -85,7 +85,7 @@ void pnode::copy_owner_vnode_bw_usage(){
 				owner_vnode->bw_rd_channel_sample[last_channel+1]->name));	
 		last_channel++;
 	}
-	for(int i=0; i < bw_rd_channel_sample.size(); i++){
+	for(int i=0; i < bw_rd_channel_sample.size() && i < owner_vnode->bw_rd_channel_sample.size(); i++){
 		assert(bw_rd_channel_sample[i]);
 		bw_rd_channel_sample[i]->merge_sample_queue(
 				owner_vnode->bw_rd_channel_sample[i]);
@@ -98,7 +98,7 @@ void pnode::copy_owner_vnode_bw_usage(){
 				owner_vnode->bw_wr_channel_sample[last_channel+1]->name));
 		last_channel++;
         }
-        for(int i=0; i < bw_wr_channel_sample.size(); i++){
+        for(int i=0; i < bw_wr_channel_sample.size() && i < owner_vnode->bw_wr_channel_sample.size(); i++){
 		assert(bw_wr_channel_sample[i]);
                 bw_wr_channel_sample[i]->merge_sample_queue(
                                 owner_vnode->bw_wr_channel_sample[i]);
