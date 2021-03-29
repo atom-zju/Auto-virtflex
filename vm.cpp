@@ -12,6 +12,8 @@ vm::vm(int id, topo_change_d* d,string s): xs_path(s), topod(d), vm_id(id), vcpu
 	logger = new vm_logger("log/vm_"+to_string(vm_id)+"_log.txt", this);
 	assert(logger);
 	logger->init();
+	num_thread_sampleq = new sample_queue(xs_path+"/numa/num_thread", topod->xs,"/num_thread");
+	assert(num_thread_sampleq);
 }
 
 vm::~vm(){
@@ -22,6 +24,8 @@ vm::~vm(){
 	}
 	if(logger)
 		delete logger;
+	if(num_thread_sampleq)
+		delete num_thread_sampleq;
 	cout << "vm: " << vm_id << " terminated." << endl;
 }
 
@@ -70,6 +74,10 @@ void vm::update_vnode_map(unsigned int ts){
 				active_node++;
 		}
 	}
+	
+	/*get sample data from num_thread dir*/
+	if (num_thread_sampleq->get_smaple_from_xs(start_time*1000))
+		cerr<< "VM " << vm_id << " failed to get num_thread samples" << endl;
 }
 
 
@@ -99,6 +107,7 @@ long vm::average_bw_usage(){
 			continue;
 		long tmp = x.second->average_bw_usage();
 		if(tmp >= 0 ){
+			cout << "average bw usage" << " node " << x.second->vnode_id << ": " << tmp << endl;
 			bw_usage += tmp;
 			cnt++;
 		}
@@ -113,7 +122,10 @@ float vm::get_average_vcpu_load(){
 	for(auto& x: vnode_map){
 		if(!(x.second->enabled))
 			continue;
-		res+= x.second->get_average_vcpu_load();
+		auto load = x.second->get_average_vcpu_load();
+		cout << "average cpu load" << " node " << x.second->vnode_id << ": " << load << endl;
+		res+= load;
+		//res+= x.second->get_average_vcpu_load();
 		cnt++;
 	}
 	return cnt>0? res/cnt: 0.0;

@@ -83,36 +83,50 @@ int list_xenstore_directory(struct xs_handle* xs, const string path, vector<stri
 
 /*
 	deque<pair<long long, int>>& samples are sorted in chronological order with the earliest sample in front
-	This return_insert_index returns the idx the sample need to be inserted, and returns -1 if already have
-	samples of the same timestamps
+	This return_insert_index returns the idx the sample need to be inserted, and set the duplicate pointer to
+	be true if already have samples of the same timestamps exist, duplicate pointer can be NULL
 */
 
-int return_insert_index(deque<pair<long long, int>>& samples, int lo, int hi, long long timestamp){
-	if(samples.empty())
+int return_insert_index(deque<pair<long long, int>>& samples, int lo, int hi, long long timestamp, bool* duplicate){
+	if(samples.empty()){
+		if(duplicate)
+			*duplicate = false;
 		return 0;
+	}
 	if(lo == hi){
-		if(samples[lo].first == timestamp)
-			return -1;
-		else if( timestamp < samples[lo].first)
+		if(samples[lo].first == timestamp){
+			if(duplicate)
+				*duplicate = true;
 			return lo;
-		else
+		}
+		else if( timestamp < samples[lo].first){
+			if(duplicate)
+                                *duplicate = false;
+			return lo;
+		}
+		else{
+                        if(duplicate)
+                                *duplicate = false;
 			return lo+1;
+		}
 	}
 	int mid = (hi - lo)/2 + lo;
 	if (samples[mid].first == timestamp){
-			return -1;
+			if(duplicate)
+				*duplicate = true;
+			return mid;
 	}
 	else if (timestamp < samples[mid].first){
 		if(mid == lo)
-			return return_insert_index(samples, lo, mid, timestamp);
+			return return_insert_index(samples, lo, mid, timestamp, duplicate);
 		else
-			return return_insert_index(samples, lo, mid-1, timestamp);
+			return return_insert_index(samples, lo, mid-1, timestamp, duplicate);
 	}
 	else{
 		if(mid == hi)
-			return return_insert_index(samples, mid, hi, timestamp);
+			return return_insert_index(samples, mid, hi, timestamp, duplicate);
 		else
-			return return_insert_index(samples, mid+1, hi, timestamp);
+			return return_insert_index(samples, mid+1, hi, timestamp, duplicate);
 	}
 }
 
@@ -137,8 +151,9 @@ void crawl_bw_samples_from_xs(struct xs_handle * xs, string dir, deque<pair<long
 					continue;
 				}
 				ts+= start_time_ms;
-				int idx =  return_insert_index(samples, 0, samples.size()-1, ts);
-				if(idx >= 0)
+				bool dup;
+				int idx =  return_insert_index(samples, 0, samples.size()-1, ts, &dup);
+				if(!dup)
 					samples.insert(samples.begin()+ idx, make_pair(ts, val));
 				if(samples.size() > max_sample_size)
 					samples.pop_front();

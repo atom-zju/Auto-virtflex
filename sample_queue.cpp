@@ -18,15 +18,14 @@ int sample_queue::get_smaple_from_xs(long long start_time_ms){
 	}
 }
 
-/* TODO:
-	use valid_ts to filter out outdated samples, right now this function calculate
-	avg over all samples
-*/
 int sample_queue::average_value_from_ts(long long valid_ts){
+	int idx;
+	bool dup;
+	idx = return_insert_index(sample, 0, sample.size()-1, valid_ts, &dup);
 	long long sum = 0;
 	int cnt = 0;
-	for(auto& x: sample){
-		sum+= x.second;
+	for(int i = idx; i < sample.size(); i++){
+		sum+= sample[i].second;
 		cnt++;
 	}
 	return cnt? sum/(long long)cnt: -1;
@@ -37,8 +36,9 @@ int sample_queue::average_value_from_ts(long long valid_ts){
 	2. calling this function repeatitively might result in redudant work*/
 void sample_queue::merge_sample_queue(sample_queue* s){
 	for(auto& x: s->sample){
-		int idx = return_insert_index(sample, 0, sample.size()-1, x.first);
-		if (idx >= 0){
+		bool dup;
+		int idx = return_insert_index(sample, 0, sample.size()-1, x.first, &dup);
+		if (!dup){
 			sample.insert(sample.begin()+idx, x);
 		}
 		if(sample.size() > max_sample_size)

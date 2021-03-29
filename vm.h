@@ -23,6 +23,7 @@ public:
 	unsigned int ts;
 	uint32_t start_time;
 	vm_logger* logger;
+	sample_queue* num_thread_sampleq;
 
         vector<deque<pair<long long, int>>> num_thread_sample;
         int max_sample_size;
