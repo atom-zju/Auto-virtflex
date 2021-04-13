@@ -116,7 +116,7 @@ long pnode::average_bw_usage(){
 	long sum = 0;
 	long long valid_ts_ms = ((long long)time(0))*1000 - VALID_SAMPLE_INTERVAL_MS;
 	for(auto& y: bw_rd_channel_sample){
-		int avg = y->average_value_from_ts(valid_ts_ms);
+		int avg = y->average_value_since_ts(valid_ts_ms);
 		if(avg >= 0){
 			sum+= avg;
 			sample_count++;
@@ -124,7 +124,7 @@ long pnode::average_bw_usage(){
 	}
 
         for(auto& y: bw_wr_channel_sample){
-		int avg = y->average_value_from_ts(valid_ts_ms);
+		int avg = y->average_value_since_ts(valid_ts_ms);
 		if(avg >= 0){
 			sum+= avg;
 			sample_count++;

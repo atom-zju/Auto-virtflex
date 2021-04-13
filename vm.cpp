@@ -8,7 +8,7 @@
 using namespace std;
 
 vm::vm(int id, topo_change_d* d,string s): xs_path(s), topod(d), vm_id(id), vcpu_path(s+"/cpu"){
-	start_time = libxl_vm_get_start_time(topod->xl_handle, vm_id);
+	start_time_sec_unix = libxl_vm_get_start_time(topod->xl_handle, vm_id);
 	logger = new vm_logger("log/vm_"+to_string(vm_id)+"_log.txt", this);
 	assert(logger);
 	logger->init();
@@ -76,7 +76,7 @@ void vm::update_vnode_map(unsigned int ts){
 	}
 	
 	/*get sample data from num_thread dir*/
-	if (num_thread_sampleq->get_smaple_from_xs(start_time*1000))
+	if (num_thread_sampleq->get_sample_from_xs(start_time_sec_unix))
 		cerr<< "VM " << vm_id << " failed to get num_thread samples" << endl;
 }
 

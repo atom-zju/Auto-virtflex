@@ -2,14 +2,15 @@
 #include "util.h"
 #include <sys/time.h>
 #include <iostream>
-
-int sample_queue::get_smaple_from_xs(long long start_time_ms){
+/* Crawling samples from xenstore doesn't have any valid timestamp restrictions, 
+   crawl it all. */
+int sample_queue::get_sample_from_xs(long long vm_start_time_sec_unix){
 	if(!xs)
 		return -1;
 	string curr_sample_num;
-	long long valid_ts = (time(0) - start_time_ms)*1000 - VALID_SAMPLE_INTERVAL_MS;
+	//long long valid_ts = (time(0) - vm_start_time_sec_unix)*1000 - VALID_SAMPLE_INTERVAL_MS;
 	if(read_from_xenstore_path(xs, xs_dir, curr_sample_num) == 0){
-		crawl_bw_samples_from_xs(xs, xs_dir, sample, max_sample_size, start_time_ms);
+		crawl_bw_samples_from_xs(xs, xs_dir, sample, max_sample_size, vm_start_time_sec_unix*1000);
 		return 0;
 	}
 	else{
@@ -18,7 +19,7 @@ int sample_queue::get_smaple_from_xs(long long start_time_ms){
 	}
 }
 
-int sample_queue::average_value_from_ts(long long valid_ts){
+int sample_queue::average_value_since_ts(long long valid_ts){
 	int idx;
 	bool dup;
 	idx = return_insert_index(sample, 0, sample.size()-1, valid_ts, &dup);

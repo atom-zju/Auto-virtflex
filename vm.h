@@ -21,7 +21,7 @@ public:
 	int active_node;
 	topo_change_d* topod;
 	unsigned int ts;
-	uint32_t start_time;
+	uint32_t start_time_sec_unix;
 	vm_logger* logger;
 	sample_queue* num_thread_sampleq;
 

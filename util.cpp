@@ -150,7 +150,7 @@ void crawl_bw_samples_from_xs(struct xs_handle * xs, string dir, deque<pair<long
 					sample_cnt++;
 					continue;
 				}
-				ts+= start_time_ms;
+				ts+= start_time_ms; // convert the xenstore uptime ts to global unix ts
 				bool dup;
 				int idx =  return_insert_index(samples, 0, samples.size()-1, ts, &dup);
 				if(!dup)

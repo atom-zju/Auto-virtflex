@@ -23,13 +23,13 @@ static int  average_bw_changeness(vm* v){
 		return 0;
 	if(avg_bw < low_thres && v->active_node > 1){
 		cout << "\tShrink" << endl;
-		return 0;
-		//return -1;
+		//return 0;
+		return -1;
 	}
 	if(avg_bw > high_thres && v->active_node < v->total_node){
 		cout << "\tExpand" << endl;
-		return 0;
-		//return 1;
+		//return 0;
+		return 1;
 	}
 	return 0;
 }

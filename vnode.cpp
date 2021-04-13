@@ -103,7 +103,7 @@ int vnode::expand(){
 
 long vnode::average_bw_usage(){
 	if(!enabled)
-		return -1;\
+		return -1;
 	long long usg = get_recent_vcpu_usage();
 	long long total_usg = topod->pnode_cpu_usage(pnode_id);
 	assert(usg <= total_usg && usg >= 0);
@@ -163,7 +163,7 @@ void vnode::read_bw_usage_from_xs(){
 			}
 			assert(bw_rd_channel_sample[num_chn_rd]);
 			if(bw_rd_channel_sample[num_chn_rd]->
-					get_smaple_from_xs(1000*((long long)(owner_vm->start_time))))
+					get_sample_from_xs(((long long)(owner_vm->start_time_sec_unix))))
 				cerr << "Error getting sample from xs for " << chn_name << endl;
 		}
 		else{
@@ -187,7 +187,7 @@ void vnode::read_bw_usage_from_xs(){
                         }
 			assert(bw_wr_channel_sample[num_chn_wr]);
 			if(bw_wr_channel_sample[num_chn_wr]->
-					get_smaple_from_xs(1000*((long long)(owner_vm->start_time))))
+					get_sample_from_xs(((long long)(owner_vm->start_time_sec_unix))))
 				cerr << "Error getting sample from xs for " << chn_name << endl;
 		}
 		else{
