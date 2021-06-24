@@ -32,6 +32,20 @@ int sample_queue::average_value_since_ts(long long valid_ts){
 	return cnt? sum/(long long)cnt: -1;
 }
 
+void sample_queue::calculate_averages(){
+	// TODO: calculate the short and long term averages
+	short_term_average = average_value_since_ts((time(0)-SHORT_TERM_AVG_TS_SEC)*1000); 
+	long_term_average = average_value_since_ts((time(0)-LONG_TERM_AVG_TS_SEC)*1000);
+}
+
+long long sample_queue::get_short_average(){
+	return short_term_average;
+}
+
+long long sample_queue::get_long_average(){
+	return long_term_average;
+}
+
 /* Note: 
 	1. calling this function for large sample size might be costly
 	2. calling this function repeatitively might result in redudant work*/

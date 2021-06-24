@@ -28,6 +28,12 @@ public:
 	int active_nodes_in_pnode();
 	void read_bw_usage_from_xs();
 	int change_pnode_owner_xs(bool own);
+	
+	// topology changeness
+	int get_topo_changeness();
+	long long bw_long_average();
+	long long bw_short_average();
+	void calculate_bw_sample_queue_averages();
 
 	vnode(int vnode_id, string path, vm* o, topo_change_d* t): 
 		vnode_id(vnode_id), xs_path(path), topod(t), enabled(1), owner_vm(o){}

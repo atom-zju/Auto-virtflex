@@ -29,6 +29,8 @@ class topo_change_engine{
 		int (*topo_changeness)(vm* v);
 		int (*shrink_candidate)(vm* v, int num, vector<int>& can);
 		int (*expand_candidate)(vm* v, int num, vector<int>& can);
+		void calculate_topo_changeness();
+		void topo_change_plan();	
 	public:
 		topo_change_engine(topo_change_d* t): topod(t) {}	
 		void config();

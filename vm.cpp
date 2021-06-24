@@ -36,6 +36,7 @@ vnode* vm::get_vnode_by_id(int id){
 	return NULL;
 }
 
+
 void vm::update_vnode_map(unsigned int ts){
 	this->ts = ts;
 	vector<string> dir;
@@ -129,6 +130,23 @@ float vm::get_average_vcpu_load(){
 		cnt++;
 	}
 	return cnt>0? res/cnt: 0.0;
+}
+
+void vm::calculate_topo_changeness(){
+	cout << "Calcualte_topo_changeness vm " << vm_id << ":" << endl;
+	int active_cnt = 0;
+	topo_changeness = 0;
+	for(auto& x: vnode_map){
+		if(!(x.second->enabled))
+			continue;
+		
+		auto tmp = x.second->get_topo_changeness();
+		cout << "Calcualte_topo_changeness vm " << vm_id << ":  node " << x.first << ": " << tmp << endl;
+		topo_changeness += tmp;
+		active_cnt++;
+	}
+	if(active_cnt)
+		topo_changeness/=active_cnt;
 }
 
 void vm::active_node_list(vector<int>& v){

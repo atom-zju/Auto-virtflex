@@ -155,21 +155,44 @@ void topo_change_engine::config(){
 
 }
 
+void topo_change_engine::calculate_topo_changeness(){
+	for(auto& x: topod->vm_map){
+		if(x.first == 0)
+			continue;
+		auto vm_ptr = x.second;
+		vm_ptr->calculate_topo_changeness();
+		cout<< "TOPO_CHANGENESS vm " << vm_ptr->vm_id << ":" << vm_ptr->topo_changeness << endl;
+	}
+}
+
+void topo_change_engine::topo_change_plan(){
+		
+}
+
 int topo_change_engine::generate_events(deque<topo_change_event>& e){
 	assert(topo_changeness);
 	assert(shrink_candidate);
 	assert(e.empty());
 	assert(topod);
-
+	
+	// clear the priority queues
 	expand_heap = priority_queue <event_candidate, vector<event_candidate>, comp>();
 	shrink_heap = priority_queue <event_candidate, vector<event_candidate>, comp>();
 	
+	// calculate topo_changeness for each of the VMs
+	calculate_topo_changeness();
+	// make a topology change plan
+	//topo_change_plan();
+	// insert into topo_change priority queue
+	// process shrink/expansion events	
+
 	// insert topo change candidate to heap according to topo_changeness
 	for(auto& x: topod->vm_map){
 		if (x.first == 0)
 			continue;
 		auto vm_ptr = x.second;
 		int pir = (*topo_changeness)(vm_ptr);
+		//int pir = vm_ptr->topo_changeness;
 		if(pir > 0){
 			expand_heap.push(event_candidate(pir, vm_ptr));
 		}

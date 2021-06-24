@@ -24,6 +24,7 @@ public:
 	uint32_t start_time_sec_unix;
 	vm_logger* logger;
 	sample_queue* num_thread_sampleq;
+	int topo_changeness;
 
         vector<deque<pair<long long, int>>> num_thread_sample;
         int max_sample_size;
@@ -36,8 +37,12 @@ public:
 	int expand_vnode(int id);
 	
 	void update_vnode_map(unsigned int ts);
+	
 	long average_bw_usage();
 	float get_average_vcpu_load();
+	
+	//topology changeness
+	void calculate_topo_changeness();
 	
 	void active_node_list(vector<int>& v);
 	void inactive_node_list(vector<int>& v);

@@ -114,6 +114,62 @@ long vnode::average_bw_usage(){
 		return (long)((long long)topod->pnode_average_bw_usage(pnode_id)*usg)/total_usg;
 }
 
+void vnode::calculate_bw_sample_queue_averages(){
+	for(int i=0; i < bw_rd_channel_sample.size(); i++){
+		bw_rd_channel_sample[i]->calculate_averages();
+	}
+	for(int i=0; i < bw_wr_channel_sample.size(); i++){
+                bw_wr_channel_sample[i]->calculate_averages();
+        }
+}
+
+long long vnode::bw_short_average(){
+	long long avg = 0;
+	int cnt = 0;
+	//assert(bw_rd_channel_sample.size() &&
+	//	bw_wr_channel_sample.size());
+	for(int i=0; i < bw_rd_channel_sample.size(); i++){
+                avg += bw_rd_channel_sample[i]->get_short_average();
+		cnt++;
+        }
+	for(int i=0; i < bw_wr_channel_sample.size(); i++){
+                avg += bw_wr_channel_sample[i]->get_short_average();
+		cnt++;
+        }
+	if(cnt == 0 )
+		cout << "bw_short_average is 0 for vnode " << vnode_id << endl;
+	return cnt?avg/cnt:0;
+}
+long long vnode::bw_long_average(){
+	long long avg = 0;
+	int cnt = 0;
+	//assert(bw_rd_channel_sample.size() &&
+	//	bw_wr_channel_sample.size());
+	for(int i=0; i < bw_rd_channel_sample.size(); i++){
+                avg += bw_rd_channel_sample[i]->get_long_average();
+		cnt++;
+        }
+	for(int i=0; i < bw_wr_channel_sample.size(); i++){
+                avg += bw_wr_channel_sample[i]->get_long_average();
+		cnt++;
+        }
+	if(cnt == 0 )
+		cout << "bw_long_average is 0 for vnode " << vnode_id << endl;
+	return cnt?avg/cnt:0;
+}
+
+int vnode::get_topo_changeness(){
+	// calculate short-term average
+	// calcualte long-term average
+	calculate_bw_sample_queue_averages();
+	long long short_avg = bw_short_average();
+	cout << "vnode::get_topo_changeness(), bw_short_average: " << short_avg<< endl;
+	long long long_avg = bw_long_average();
+	cout << "vnode::get_topo_changeness(), bw_long_average: " << long_avg<< endl;
+	// TODO need some kind of normalization to regulate the results
+	return (short_avg - long_avg)/50; // divided by 50 to normalized the reauslt
+}
+
 int vnode::active_nodes_in_pnode(){
 	assert(topod->pnode_list.size()>=pnode_id+1);
 	return topod->pnode_list[pnode_id]->active_vnodes;
