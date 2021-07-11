@@ -26,7 +26,10 @@ vm::~vm(){
 		delete logger;
 	if(num_thread_sampleq)
 		delete num_thread_sampleq;
-	cout << "vm: " << vm_id << " terminated." << endl;
+	cout << UNIX_TS<< "vm: " << vm_id << " terminated." << endl;
+	if(file_output)
+	of << UNIX_TS<< "vm: " << vm_id << " terminated." << endl;
+	
 }
 
 vnode* vm::get_vnode_by_id(int id){
@@ -44,7 +47,7 @@ void vm::update_vnode_map(unsigned int ts){
 	assert(topod);
 	list_xenstore_directory(topod->xs, node_path, dir);
 	
-	cout << node_path <<endl;
+	cout << UNIX_TS<< node_path <<endl;
 	for(auto& x: dir){
 		//cout<< "\t"<< x << endl;
 		int node_id = stoi(x);
@@ -85,7 +88,7 @@ void vm::update_vnode_map(unsigned int ts){
 int vm::shrink_vnode(int id){
 	vnode* v = get_vnode_by_id(id);
 	if(!v){
-		cout<< "Didn't find vnode " << id << " in vm::shrink_vnode" <<endl;
+		cout<< UNIX_TS<< "Didn't find vnode " << id << " in vm::shrink_vnode" <<endl;
 		return -1;
 	}
 	return v->shrink();
@@ -93,7 +96,7 @@ int vm::shrink_vnode(int id){
 int vm::expand_vnode(int id){
 	vnode* v = get_vnode_by_id(id);
         if(!v){
-                cout<< "Didn't find vnode " << id << " in vm::expand_vnode" <<endl;
+                cout<< UNIX_TS<< "Didn't find vnode " << id << " in vm::expand_vnode" <<endl;
 		return -1;
 	}
         return v->expand();
@@ -108,7 +111,10 @@ long vm::average_bw_usage(){
 			continue;
 		long tmp = x.second->average_bw_usage();
 		if(tmp >= 0 ){
-			cout << "average bw usage" << " node " << x.second->vnode_id << ": " << tmp << endl;
+			cout << UNIX_TS << "average bw usage" << " node " << x.second->vnode_id << ": " << tmp << endl;
+			if(file_output)
+			of << UNIX_TS << "average bw usage" << " node " << x.second->vnode_id << ": " << tmp << endl;
+			
 			bw_usage += tmp;
 			cnt++;
 		}
@@ -124,7 +130,9 @@ float vm::get_average_vcpu_load(){
 		if(!(x.second->enabled))
 			continue;
 		auto load = x.second->get_average_vcpu_load();
-		cout << "average cpu load" << " node " << x.second->vnode_id << ": " << load << endl;
+		cout << UNIX_TS<< "average cpu load" << " node " << x.second->vnode_id << ": " << load << endl;
+		if(file_output)
+		of << UNIX_TS<< "average cpu load" << " node " << x.second->vnode_id << ": " << load << endl;
 		res+= load;
 		//res+= x.second->get_average_vcpu_load();
 		cnt++;
@@ -133,7 +141,7 @@ float vm::get_average_vcpu_load(){
 }
 
 void vm::calculate_topo_changeness(){
-	cout << "Calcualte_topo_changeness vm " << vm_id << ":" << endl;
+	cout << UNIX_TS<< "Calcualte_topo_changeness vm " << vm_id << ":" << endl;
 	int active_cnt = 0;
 	topo_changeness = 0;
 	for(auto& x: vnode_map){
@@ -141,7 +149,9 @@ void vm::calculate_topo_changeness(){
 			continue;
 		
 		auto tmp = x.second->get_topo_changeness();
-		cout << "Calcualte_topo_changeness vm " << vm_id << ":  node " << x.first << ": " << tmp << endl;
+		cout << UNIX_TS<< "Calcualte_topo_changeness vm " << vm_id << ":  node " << x.first << ": " << tmp << endl;
+		if(file_output)
+		of << UNIX_TS<< "Calcualte_topo_changeness vm " << vm_id << ":  node " << x.first << ": " << tmp << endl;
 		topo_changeness += tmp;
 		active_cnt++;
 	}

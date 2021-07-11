@@ -12,22 +12,30 @@ static int  naive_toggle(vm* v){
 		return -1;
 }
 static int  average_bw_changeness(vm* v){
-	unsigned long low_thres = 500;
-	unsigned long high_thres = 800;
+	unsigned long low_thres = 150;
+	unsigned long high_thres = 700;
 	assert(v);
 	long avg_bw = v->average_bw_usage();
 	float avg_load = v->get_average_vcpu_load();
-	cout << "TOPO_ENGINE: vm " << v->vm_id << ", avg_bw: " << avg_bw << endl;
-	cout << "TOPO_ENGINE: vm " << v->vm_id << ", avg_load: " << avg_load << endl;
+	cout << UNIX_TS<< "TOPO_ENGINE: vm " << v->vm_id << ", avg_bw: " << avg_bw << endl;
+	if(file_output)
+	of << UNIX_TS<< "TOPO_ENGINE: vm " << v->vm_id << ", avg_bw: " << avg_bw << endl;
+	cout << UNIX_TS<< "TOPO_ENGINE: vm " << v->vm_id << ", avg_load: " << avg_load << endl;
+	if(file_output)
+	of << UNIX_TS<< "TOPO_ENGINE: vm " << v->vm_id << ", avg_load: " << avg_load << endl;
 	if(avg_bw < 0 )
 		return 0;
 	if(avg_bw < low_thres && v->active_node > 1){
-		cout << "\tShrink" << endl;
+		cout << UNIX_TS<< "\tShrink" << endl;
+		if(file_output)
+		of << UNIX_TS<< "\tShrink" << endl;
 		//return 0;
 		return -1;
 	}
 	if(avg_bw > high_thres && v->active_node < v->total_node){
-		cout << "\tExpand" << endl;
+		cout << UNIX_TS<< "\tExpand" << endl;
+		if(file_output)
+		of << UNIX_TS<< "\tExpand" << endl;
 		//return 0;
 		return 1;
 	}
@@ -39,16 +47,24 @@ static int  average_vcpu_load_changeness(vm* v){
 	assert(v);
 	long avg_bw = v->average_bw_usage();
 	float avg_load = v->get_average_vcpu_load();
-	cout << "TOPO_ENGINE: vm " << v->vm_id << ", avg_bw: " << avg_bw << endl;
-	cout << "TOPO_ENGINE: vm " << v->vm_id << ", avg_load: " << avg_load << endl;
+	cout << UNIX_TS<< "TOPO_ENGINE: vm " << v->vm_id << ", avg_bw: " << avg_bw << endl;
+	if(file_output)
+	of << UNIX_TS<< "TOPO_ENGINE: vm " << v->vm_id << ", avg_bw: " << avg_bw << endl;
+	cout << UNIX_TS<< "TOPO_ENGINE: vm " << v->vm_id << ", avg_load: " << avg_load << endl;
+	if(file_output)
+	of << UNIX_TS<< "TOPO_ENGINE: vm " << v->vm_id << ", avg_load: " << avg_load << endl;
 	if(avg_load < 0 )
 		return 0;
 	if(avg_load < low_thres && v->active_node > 1){
-		cout << "\t------SHRINK-----" << endl;
+		cout << UNIX_TS<< "\t------SHRINK-----" << endl;
+		if(file_output)
+		of << UNIX_TS<< "\t------SHRINK-----" << endl;
 		return -1;
 	}
 	if(avg_load > high_thres && v->active_node < v->total_node){
-		cout << "\t++++++EXPAND+++++" << endl;
+		cout << UNIX_TS<< "\t++++++EXPAND+++++" << endl;
+		if(file_output)
+		of << UNIX_TS<< "\t++++++EXPAND+++++" << endl;
 		return 1;
 	}
 	return 0;
@@ -161,7 +177,10 @@ void topo_change_engine::calculate_topo_changeness(){
 			continue;
 		auto vm_ptr = x.second;
 		vm_ptr->calculate_topo_changeness();
-		cout<< "TOPO_CHANGENESS vm " << vm_ptr->vm_id << ":" << vm_ptr->topo_changeness << endl;
+		cout<< UNIX_TS<< "TOPO_CHANGENESS vm " << vm_ptr->vm_id << ":" << vm_ptr->topo_changeness << endl;
+		if(file_output)
+		of<< UNIX_TS<< "TOPO_CHANGENESS vm " << vm_ptr->vm_id << ":" << vm_ptr->topo_changeness << endl;
+		
 	}
 }
 
@@ -210,7 +229,9 @@ int topo_change_engine::generate_events(deque<topo_change_event>& e){
 		if((*shrink_candidate)(can.v, 1, nodes) == 0)
 			e.push_back(topo_change_event(can.v->vm_id, -1, nodes));
 		else
-			cout<< "Find shrink candidatefor vm " << can.v->vm_id << " failed" << endl;
+			cout << UNIX_TS << "Find shrink candidatefor vm " << can.v->vm_id << " failed" << endl;
+			if(file_output)
+			of << UNIX_TS << "Find shrink candidatefor vm " << can.v->vm_id << " failed" << endl;
 	}
 
 	//process expand events
@@ -221,7 +242,9 @@ int topo_change_engine::generate_events(deque<topo_change_event>& e){
 		if((*expand_candidate)(can.v, 1, nodes) == 0)
 			e.push_back(topo_change_event(can.v->vm_id, 1, nodes));
 		else
-			cout<< "Find expand candidatefor vm " << can.v->vm_id << " failed" << endl;
+			cout << UNIX_TS << "\tFind expand candidatefor vm " << can.v->vm_id << " failed" << endl;
+			if(file_output)
+			of << UNIX_TS << "\tFind expand candidatefor vm " << can.v->vm_id << " failed" << endl;
 	}
 	
 	return 0;

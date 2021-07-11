@@ -136,8 +136,11 @@ long long vnode::bw_short_average(){
                 avg += bw_wr_channel_sample[i]->get_short_average();
 		cnt++;
         }
-	if(cnt == 0 )
-		cout << "bw_short_average is 0 for vnode " << vnode_id << endl;
+	if(cnt == 0 ){
+		cout << UNIX_TS<< "bw_short_average is 0 for vnode " << vnode_id << endl;
+		if(file_output)
+		of << UNIX_TS<< "bw_short_average is 0 for vnode " << vnode_id << endl;
+	}
 	return cnt?avg/cnt:0;
 }
 long long vnode::bw_long_average(){
@@ -153,8 +156,11 @@ long long vnode::bw_long_average(){
                 avg += bw_wr_channel_sample[i]->get_long_average();
 		cnt++;
         }
-	if(cnt == 0 )
-		cout << "bw_long_average is 0 for vnode " << vnode_id << endl;
+	if(cnt == 0 ){
+		cout << UNIX_TS<< "bw_long_average is 0 for vnode " << vnode_id << endl;
+		if(file_output)
+		of << UNIX_TS<< "bw_long_average is 0 for vnode " << vnode_id << endl;
+	}
 	return cnt?avg/cnt:0;
 }
 
@@ -163,9 +169,13 @@ int vnode::get_topo_changeness(){
 	// calcualte long-term average
 	calculate_bw_sample_queue_averages();
 	long long short_avg = bw_short_average();
-	cout << "vnode::get_topo_changeness(), bw_short_average: " << short_avg<< endl;
+	cout << UNIX_TS<< "vnode::get_topo_changeness(), bw_short_average: " << short_avg<< endl;
+	if(file_output)
+	of << UNIX_TS<< "vnode::get_topo_changeness(), bw_short_average: " << short_avg<< endl;
 	long long long_avg = bw_long_average();
-	cout << "vnode::get_topo_changeness(), bw_long_average: " << long_avg<< endl;
+	cout << UNIX_TS<< "vnode::get_topo_changeness(), bw_long_average: " << long_avg<< endl;
+	if(file_output)	
+	of << UNIX_TS<< "vnode::get_topo_changeness(), bw_long_average: " << long_avg<< endl;
 	// TODO need some kind of normalization to regulate the results
 	return (short_avg - long_avg)/50; // divided by 50 to normalized the reauslt
 }
@@ -193,7 +203,9 @@ float vnode::get_average_vcpu_load(){
 
 int vnode::change_pnode_owner_xs(bool own){
 	if (write_to_xenstore_path(topod->xs, xs_path+"/pnode_owner", own? string("1"): string("0")) != 0){
-		cout << "Error when writing to pnode_owner" << endl;
+		cout<< UNIX_TS << "Error when writing to pnode_owner" << endl;
+		if(file_output)
+		of<< UNIX_TS << "Error when writing to pnode_owner" << endl;
 		return -1;
 	}
 	return 0;
@@ -204,7 +216,9 @@ void vnode::read_bw_usage_from_xs(){
 	string tmp;
 	change_pnode_owner_xs(true);
 	/* get rd bw usage info */
-	cout << "Read_bw_usage_from_xs: pnode: "  << pnode_id << " vnode: " << vnode_id <<endl;
+	cout << UNIX_TS<< "Read_bw_usage_from_xs: pnode: "  << pnode_id << " vnode: " << vnode_id <<endl;
+	if(file_output)
+	of << UNIX_TS<< "Read_bw_usage_from_xs: pnode: "  << pnode_id << " vnode: " << vnode_id <<endl;
 	int num_chn_rd = 0;
 	do{
 		string chn_name("/bw_usage_");

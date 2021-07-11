@@ -13,7 +13,6 @@ extern "C"
 
 using namespace std;
 
-
 int write_to_xenstore_path(struct xs_handle* xs, const string path, const string value);
 
 int read_from_xenstore_path(struct xs_handle* xs, const string path, string& s);

@@ -3,6 +3,7 @@
 
 #include <string>
 #include "node.h"
+#include "topo_change.h"
 
 class vm;
 class topo_change_d;

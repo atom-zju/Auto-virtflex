@@ -21,7 +21,9 @@ void pnode::unregister_vnode(int vm_id, vnode* n){
 }
 
 void pnode::update_vnode_map(int ts){
-	cout << "updating pnode, id: " << pnode_id << endl;
+	cout << UNIX_TS << "\tupdating pnode, id: " << pnode_id << endl;
+	if(file_output)
+	of << UNIX_TS << "\tupdating pnode, id: " << pnode_id << endl;
 	active_vnodes = 0;
 	total_vnodes = 0;
 	recent_cpu_usage = 0;
@@ -43,8 +45,8 @@ void pnode::update_vnode_map(int ts){
 			}
 		}
 	}
-	cout << "total_vnodes: " << total_vnodes << endl;
-	cout << "active_vnodes: " << active_vnodes << endl;
+	cout << UNIX_TS<< "\ttotal_vnodes: " << total_vnodes << endl;
+	cout << UNIX_TS<< "\tactive_vnodes: " << active_vnodes << endl;
 	
 	if(owner_vnode == NULL){
 		pick_owner_vnode();

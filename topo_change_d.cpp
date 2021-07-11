@@ -71,10 +71,14 @@ void topo_change_d::update_vm_map(){
 	vector<string> dir;
 	list_xenstore_directory(xs, string("/local/domain"), dir);
 	//cout<<"/local/domain"<< endl;
-	cout << "Updating vm_map" << endl;
+	cout << UNIX_TS<< "\tUpdating vm_map" << endl;
+	if(file_output)
+	of << UNIX_TS<< "\tUpdating vm_map" << endl;
 	for(auto& x: dir){
 		int vm_id =  stoi(x);
-		cout <<"\t" <<"VM: "<<stoi(x) << endl;
+		cout << UNIX_TS<<"\t\t" <<"VM: "<<stoi(x) << endl;
+		if(file_output)
+		of << UNIX_TS<<"\t\t" <<"VM: "<<stoi(x) << endl;
 		if(vm_map.find(vm_id) == vm_map.end()){
 			vm* v = new vm(vm_id, this, string("/local/domain/").append(x));
 			v->update_vnode_map(ts);
@@ -87,7 +91,7 @@ void topo_change_d::update_vm_map(){
 	}
 	
 	// delete obsolete vm
-	cout << "Deleting obsolete vm" << endl;
+	cout << UNIX_TS<< "Deleting obsolete vm" << endl;
 	for(auto& x: vm_map){
 		auto v = x.second;
 		if(v->ts < ts){
@@ -97,7 +101,7 @@ void topo_change_d::update_vm_map(){
 	}
 	
 	// update pnode info, after this function the pnode bw information is available.
-	cout << "Updating pnode_list" << endl;
+	cout << UNIX_TS<< "Updating pnode_list" << endl;
 	for(auto& x: pnode_list){
 		x->update_vnode_map(ts);
 	}
@@ -115,7 +119,7 @@ void topo_change_d::update_vm_map(){
 int topo_change_d::shrink_vm(int id, int vnode_id){
 	vm* v = get_vm_by_id(id);
 	if(!v){
-		cout<<"Didn't find vm " << id << " in topo_change_d::shrink_vm" <<endl;
+		cout<< UNIX_TS<<"Didn't find vm " << id << " in topo_change_d::shrink_vm" <<endl;
 		return -1;
 	}
 	return v->shrink_vnode(vnode_id);
@@ -123,7 +127,7 @@ int topo_change_d::shrink_vm(int id, int vnode_id){
 int topo_change_d::expand_vm(int id, int vnode_id){
 	vm* v = get_vm_by_id(id);
 	if(!v){
-		cout<<"Didn't find vm " << id << " in topo_change_d::expand_vm" <<endl;
+		cout<< UNIX_TS<<"Didn't find vm " << id << " in topo_change_d::expand_vm" <<endl;
 		return -1;
 	}
 	return v->expand_vnode(vnode_id);
@@ -168,7 +172,7 @@ void topo_change_d::start(){
 
 void topo_change_d::process_event(topo_change_event& e){
 	if(e.action!= 1 && e.action!=-1){
-		cout << "Cannot process event on vm: " << e.vm_id <<" in topo_change_d::process_event"<< endl;
+		cout << UNIX_TS<< "Cannot process event on vm: " << e.vm_id <<" in topo_change_d::process_event"<< endl;
 		return;
 	}
 	int (topo_change_d::*action_func)(int, int) = e.action==1? (&topo_change_d::expand_vm) : (&topo_change_d::shrink_vm);
@@ -190,9 +194,11 @@ void topo_change_d::generate_events(){
     	int error = sysinfo(&s_info);
     	if(error != 0)
     	{
-        	printf("Error when getting system uptime, code error = %d\n", error);
+        	cout << UNIX_TS << "Error when getting system uptime, code error = "  << error << endl;
 	}
-	cout << "==================topo_change_d::generate_events(), ts:" << ts <<"===== " <<s_info.uptime<< " ===========" << endl;
+	cout << UNIX_TS<< "==================topo_change_d::generate_events(), ts:" << ts <<"===== " <<s_info.uptime<< " ===========" << endl;
+	if(file_output)
+	of << UNIX_TS<< "==================topo_change_d::generate_events(), ts:" << ts <<"===== " <<s_info.uptime<< " ===========" << endl;
 	update_vm_map();
 	engine->generate_events(event_list);			
 }
