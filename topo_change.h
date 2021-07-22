@@ -12,6 +12,7 @@
 #define VALID_SAMPLE_INTERVAL_MS 10000
 #define SHORT_TERM_AVG_TS_SEC 60
 #define LONG_TERM_AVG_TS_SEC 600
+#define MAX_LOCAL_CPU_SP_SIZE 10
 
 //#define UNIX_TS time(NULL)%1000000<<"\t" 
 #define UNIX_TS time(NULL)<<" [ TOPO CHANGE DAEMON ] " 

@@ -2,7 +2,10 @@
 #define CPU_H
 #include <cstddef>
 #include <sys/time.h>
+#include <queue>
 class vm;
+
+using namespace std;
 
 class cpu{
 public:
@@ -13,6 +16,7 @@ public:
 	long long usage_ms;
 	long long recent_usage_ms;
 	float recent_usage_percent;
+	deque<pair<long long, float>> samples;
 
 	cpu(int id=0, bool en=true, vm* o=NULL): cpuid(id), enabled(en), owner(o), usage_ms(0) {}
 	//cpu(): cpuid(0), enabled(true), owner(NULL), usage_ms(0) {}

@@ -85,28 +85,31 @@ static int lowest_bw_candidate(vm* v, int num, vector<int>& can){
 		return 0;
 	}
 	
-	vector<long> bw_usage;
+	vector<long> bw_usage(can.size(), -1);
 	for(int i =0; i< can.size(); i++){
 		auto node = v->get_vnode_by_id(can[i]);
 		if(node){
 			long bw = node->average_bw_usage();
 			if(bw>=0){
-				bw_usage.push_back(bw);
-				continue;
+				bw_usage[i] = bw;
+				//continue;
 			}
 		}
-		can.erase(can.begin()+i);
-		i--;
+		//can.erase(can.begin()+i);
+		//i--;
 	}
 	
-	if(num >= can.size()){
-                return 0;
-        }
+	//if(num >= can.size()){
+        //        return 0;
+        //}
 
 	//get the lowest num elements in bw_usage and return the corresponding vnode id in can
 	//can.push_back(3);
 	priority_queue<pair<long, int>, vector<pair<long, int>>, comp_pair> max_h;
 	for(int i=0; i < can.size(); i++){
+		// skip node 0 and nodes that don't have valid bw usage
+		if(can[i] == 0 || bw_usage[i] == -1)
+			continue;
 		max_h.push(make_pair(bw_usage[i], can[i]));
 		if(max_h.size() > num){
 			max_h.pop();

@@ -12,7 +12,7 @@ vm::vm(int id, topo_change_d* d,string s): xs_path(s), topod(d), vm_id(id), vcpu
 	logger = new vm_logger("log/vm_"+to_string(vm_id)+"_log.txt", this);
 	assert(logger);
 	logger->init();
-	num_thread_sampleq = new sample_queue(xs_path+"/numa/num_thread", topod->xs,"/num_thread");
+	num_thread_sampleq = new sample_queue<int>(xs_path+"/numa/num_thread", topod->xs,"/num_thread");
 	assert(num_thread_sampleq);
 }
 
@@ -80,7 +80,7 @@ void vm::update_vnode_map(unsigned int ts){
 	}
 	
 	/*get sample data from num_thread dir*/
-	if (num_thread_sampleq->get_sample_from_xs(start_time_sec_unix))
+	if (num_thread_sampleq->get_sample(start_time_sec_unix))
 		cerr<< "VM " << vm_id << " failed to get num_thread samples" << endl;
 }
 

@@ -3,6 +3,8 @@
 #include <cstdio>
 #include <cstring>
 #include <iostream>
+#include "cpu.h"
+#include "node.h"
 
 using namespace std;
 
@@ -81,54 +83,54 @@ int list_xenstore_directory(struct xs_handle* xs, const string path, vector<stri
                                                  ......
 */
 
-/*
-	deque<pair<long long, int>>& samples are sorted in chronological order with the earliest sample in front
-	This return_insert_index returns the idx the sample need to be inserted, and set the duplicate pointer to
-	be true if already have samples of the same timestamps exist, duplicate pointer can be NULL
-*/
-
-int return_insert_index(deque<pair<long long, int>>& samples, int lo, int hi, long long timestamp, bool* duplicate){
-	if(samples.empty()){
-		if(duplicate)
-			*duplicate = false;
-		return 0;
-	}
-	if(lo == hi){
-		if(samples[lo].first == timestamp){
-			if(duplicate)
-				*duplicate = true;
-			return lo;
-		}
-		else if( timestamp < samples[lo].first){
-			if(duplicate)
-                                *duplicate = false;
-			return lo;
-		}
-		else{
-                        if(duplicate)
-                                *duplicate = false;
-			return lo+1;
-		}
-	}
-	int mid = (hi - lo)/2 + lo;
-	if (samples[mid].first == timestamp){
-			if(duplicate)
-				*duplicate = true;
-			return mid;
-	}
-	else if (timestamp < samples[mid].first){
-		if(mid == lo)
-			return return_insert_index(samples, lo, mid, timestamp, duplicate);
-		else
-			return return_insert_index(samples, lo, mid-1, timestamp, duplicate);
-	}
-	else{
-		if(mid == hi)
-			return return_insert_index(samples, mid, hi, timestamp, duplicate);
-		else
-			return return_insert_index(samples, mid+1, hi, timestamp, duplicate);
-	}
-}
+///*
+//	deque<pair<long long, int>>& samples are sorted in chronological order with the earliest sample in front
+//	This return_insert_index returns the idx the sample need to be inserted, and set the duplicate pointer to
+//	be true if already have samples of the same timestamps exist, duplicate pointer can be NULL
+//*/
+//
+//int return_insert_index(deque<pair<long long, int>>& samples, int lo, int hi, long long timestamp, bool* duplicate){
+//	if(samples.empty()){
+//		if(duplicate)
+//			*duplicate = false;
+//		return 0;
+//	}
+//	if(lo == hi){
+//		if(samples[lo].first == timestamp){
+//			if(duplicate)
+//				*duplicate = true;
+//			return lo;
+//		}
+//		else if( timestamp < samples[lo].first){
+//			if(duplicate)
+//                                *duplicate = false;
+//			return lo;
+//		}
+//		else{
+//                        if(duplicate)
+//                                *duplicate = false;
+//			return lo+1;
+//		}
+//	}
+//	int mid = (hi - lo)/2 + lo;
+//	if (samples[mid].first == timestamp){
+//			if(duplicate)
+//				*duplicate = true;
+//			return mid;
+//	}
+//	else if (timestamp < samples[mid].first){
+//		if(mid == lo)
+//			return return_insert_index(samples, lo, mid, timestamp, duplicate);
+//		else
+//			return return_insert_index(samples, lo, mid-1, timestamp, duplicate);
+//	}
+//	else{
+//		if(mid == hi)
+//			return return_insert_index(samples, mid, hi, timestamp, duplicate);
+//		else
+//			return return_insert_index(samples, mid+1, hi, timestamp, duplicate);
+//	}
+//}
 
 
 
@@ -167,4 +169,45 @@ void crawl_bw_samples_from_xs(struct xs_handle * xs, string dir, deque<pair<long
 
 }
 
+//template <class T>
+int get_cpu_usage_sample(sample_queue<float>* sq, node* owner){
+	if(!owner){
+		cerr<< "get_cpu_usage_sample using a NULL node pointer" << endl;	
+		return -1;
+	}
+	//if(!is_same<T,float>::value){
+	//	cerr<< "get_cpu_usage_sample base type is not float" <<endl;
+	//	return -1;
+	//}
+	vector<pair<long long,float>> merge;
+	int cnt = 0;
+	cpu* cpu_ptr = owner->first_cpu();
+	do{
+		const deque<pair<long long,float>>& q = cpu_ptr->samples;
+		for(int i=0; i<q.size(); i++){
+			if(i >= merge.size()){
+				merge.push_back(make_pair(0, 0));
+			}
+			//assert(merge[i].first==0 || merge[i].first == q[i].first);
+			merge[i].second+=q[i].second;
+		}
+		cnt++;
+	}while(cpu_ptr = owner->next_cpu());
+	for(int i = 0; i < merge.size(); i++){
+		merge[i].second /= cnt;
+	}
+        for(auto& m: merge){
+                bool dup;
+                int idx = return_insert_index(sq->sample, 0, sq->sample.size()-1, m.first, &dup);
+                if (!dup){
+                        sq->sample.insert(sq->sample.begin()+idx, m);
+                }
+                if(sq->sample.size() > sq->max_sample_size)
+                        sq->sample.pop_front();
+        }
+	return 0;
+}
 
+unordered_map<string, void (*)()> get_sample_func_map = {
+        {"cpu sample queue", (void (*)())get_cpu_usage_sample}
+};

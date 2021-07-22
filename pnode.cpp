@@ -81,7 +81,7 @@ void pnode::copy_owner_vnode_bw_usage(){
 	   2. merge samples from vnode sample queue */
 	int last_channel = bw_rd_channel_sample.size()-1;
 	while(bw_rd_channel_sample.size() < owner_vnode->bw_rd_channel_sample.size()){
-		bw_rd_channel_sample.push_back(new sample_queue(
+		bw_rd_channel_sample.push_back(new sample_queue<int>(
 				owner_vnode->bw_rd_channel_sample[last_channel+1]->name,
 				NULL,
 				owner_vnode->bw_rd_channel_sample[last_channel+1]->name));	
@@ -94,7 +94,7 @@ void pnode::copy_owner_vnode_bw_usage(){
 	}
 	last_channel = bw_wr_channel_sample.size()-1;
 	while(bw_wr_channel_sample.size() < owner_vnode->bw_wr_channel_sample.size()){
-                bw_wr_channel_sample.push_back(new sample_queue(
+                bw_wr_channel_sample.push_back(new sample_queue<int>(
 				owner_vnode->bw_wr_channel_sample[last_channel+1]->name,
 				NULL,
 				owner_vnode->bw_wr_channel_sample[last_channel+1]->name));

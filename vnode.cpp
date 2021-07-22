@@ -226,14 +226,14 @@ void vnode::read_bw_usage_from_xs(){
 		
 		if(read_from_xenstore_path(topod->xs, string(xs_path)+chn_name+"/curr_sample_num", tmp) == 0){
 			if(bw_rd_channel_sample.size() == num_chn_rd){
-				bw_rd_channel_sample.push_back(new sample_queue(
+				bw_rd_channel_sample.push_back(new sample_queue<int>(
 						string(xs_path)+chn_name,
 						topod->xs,
 						chn_name));
 			}
 			assert(bw_rd_channel_sample[num_chn_rd]);
 			if(bw_rd_channel_sample[num_chn_rd]->
-					get_sample_from_xs(((long long)(owner_vm->start_time_sec_unix))))
+					get_sample(((long long)(owner_vm->start_time_sec_unix))))
 				cerr << "Error getting sample from xs for " << chn_name << endl;
 		}
 		else{
@@ -250,14 +250,14 @@ void vnode::read_bw_usage_from_xs(){
 		
 		if(read_from_xenstore_path(topod->xs, string(xs_path)+chn_name+"/curr_sample_num", tmp) == 0){
 			if(bw_wr_channel_sample.size() == num_chn_wr){
-				bw_wr_channel_sample.push_back(new sample_queue(
+				bw_wr_channel_sample.push_back(new sample_queue<int>(
 						string(xs_path)+chn_name,
 						topod->xs,
 						chn_name));
                         }
 			assert(bw_wr_channel_sample[num_chn_wr]);
 			if(bw_wr_channel_sample[num_chn_wr]->
-					get_sample_from_xs(((long long)(owner_vm->start_time_sec_unix))))
+					get_sample(((long long)(owner_vm->start_time_sec_unix))))
 				cerr << "Error getting sample from xs for " << chn_name << endl;
 		}
 		else{
