@@ -28,12 +28,13 @@ public:
 	//int max_sample_size;
 	vector<sample_queue<int>*> bw_rd_channel_sample;
 	vector<sample_queue<int>*> bw_wr_channel_sample;
+	sample_queue<float>* cpu_usage_sq;
 	cpu* first_cpu();	
 	cpu* next_cpu();
 	unsigned int ts;
 
-	node(int id): pnode_id(id) {}
-	node() {}
+	node(int id): pnode_id(id), cpu_usage_sq(NULL) {}
+	node(): cpu_usage_sq(NULL) {}
 	~node();
 };
 

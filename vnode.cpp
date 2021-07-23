@@ -45,6 +45,14 @@ void vnode::update_node(unsigned int ts){
 		}
 		cpu_map[stoi(x)].update_usage(&now);
 	}
+	if(!cpu_usage_sq){
+		cpu_usage_sq = new sample_queue<float>(string(""), NULL, 
+				CPU_SQ_NAME, MAX_SAMPLE_SIZE, (node*)this);
+	}
+	cpu_usage_sq->get_sample();
+	//cpu_usage_sq->calculate_averages();
+	//cout << UNIX_TS << "node: " << vnode_id << " cpu sq short avg: " << cpu_usage_sq->get_short_average();
+	//cout << " cpu sq size : " << cpu_usage_sq->sample.size() << endl;
 
 	// calculate low target base on capacity, formula:
 	// low_target = (80*1024 + capacity/1024*17)

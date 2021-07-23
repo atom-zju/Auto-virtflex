@@ -14,6 +14,8 @@
 #define LONG_TERM_AVG_TS_SEC 600
 #define MAX_LOCAL_CPU_SP_SIZE 10
 
+#define CPU_SQ_NAME "cpu sample queue"
+
 //#define UNIX_TS time(NULL)%1000000<<"\t" 
 #define UNIX_TS time(NULL)<<" [ TOPO CHANGE DAEMON ] " 
 

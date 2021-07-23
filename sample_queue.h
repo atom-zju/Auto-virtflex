@@ -4,6 +4,7 @@
 #include <deque>
 #include <string>
 #include <unordered_map>
+#include <cassert>
 
 //#define MAX_SAMPLE_SIZE 10
 #define MAX_SAMPLE_SIZE 2000
@@ -34,7 +35,7 @@ public:
 	void calculate_averages();
 	T get_short_average();
 	T get_long_average();
-	int get_sample(long long vm_start_time_sec_unix);
+	int get_sample(long long vm_start_time_sec_unix = 0);
 	T average_value_since_ts(long long valid_ts);
 	void merge_sample_queue(sample_queue* s);
 private:	
@@ -74,22 +75,34 @@ int sample_queue<T>::get_sample_from_xs(long long vm_start_time_sec_unix){
 	}
 }
 
-
-template <class T>
-int sample_queue<T>::get_sample(long long vm_start_time_sec_unix){
-	if(!xs_dir.empty()){
-		return get_sample_from_xs(vm_start_time_sec_unix);
-	}
-	else{
-		if(get_sample_func_map.find(this->name) == get_sample_func_map.end()){
-			cerr << "get_sample: cannot find get sample func in func map, name:" << this->name << endl;
-			return -1;
-		}
-		else{
-			return ((int (*)(sample_queue<T>*, node*))get_sample_func_map[this->name])(this, owner);
-		}
-	}
-}
+//template<>
+//int sample_queue<int>::get_sample(long long vm_start_time_sec_unix){
+//	if(!xs_dir.empty()){
+//		assert(vm_start_time_sec_unix);
+//		return get_sample_from_xs(vm_start_time_sec_unix);
+//	}
+//	else{
+//		if(get_sample_func_map.find(this->name) == get_sample_func_map.end()){
+//			cerr << "get_sample: cannot find get sample func in func map, name:" << this->name << endl;
+//			return -1;
+//		}
+//		else{
+//			return ((int (*)(sample_queue<int>*, node*))get_sample_func_map[this->name])(this, owner);
+//		}
+//	}
+//}
+//
+//template<>
+//int sample_queue<float>::get_sample(long long vm_start_time_sec_unix){
+//        assert(xs_dir.empty());
+//        if(get_sample_func_map.find(this->name) == get_sample_func_map.end()){
+//        	cerr << "get_sample: cannot find get sample func in func map, name:" << this->name << endl;
+//                return -1;
+//     	}
+//        else{
+//                return ((int (*)(sample_queue<float>*, node*))get_sample_func_map[this->name])(this, owner);
+//        }
+//}
 
 template <class T>
 T sample_queue<T>::average_value_since_ts(long long valid_ts){

@@ -28,7 +28,6 @@ int return_insert_index(deque<pair<long long, T>>& samples, int lo, int hi, long
 
 void crawl_bw_samples_from_xs(struct xs_handle * xs, string dir, deque<pair<long long, int>>& samples, int max_sample_size, long long start_time_ms);
 
-//template <class T>
 int get_cpu_usage_sample(sample_queue<float>* sq, node* n);
 
 extern unordered_map<string, void(*)()> get_sample_func_map;

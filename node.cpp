@@ -7,6 +7,9 @@ node::~node(){
 	for(auto& x : bw_wr_channel_sample){
                 delete x;
         }
+	if(cpu_usage_sq){
+		delete cpu_usage_sq;
+	}
 }
 
 cpu* node::first_cpu(){
