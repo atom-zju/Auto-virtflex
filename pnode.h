@@ -37,7 +37,7 @@ public:
 	void pick_owner_vnode(void);
 	void get_owner_vnode_stat(void);
 	long average_bw_usage();
-	void copy_owner_vnode_bw_usage();
+	//void copy_owner_vnode_bw_usage();
 	void grab_bw_sample();
 	void scatter_bw_sample();
 };

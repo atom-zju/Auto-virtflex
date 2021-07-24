@@ -10,7 +10,7 @@
 using namespace std;
 
 unordered_map<string, void (*)()> get_sample_func_map = {
-        {CPU_SQ_NAME, (void (*)())get_cpu_usage_sample}
+        {CPU_USAGE_SQ, (void (*)())get_cpu_usage_sample}
 };
 
 int write_to_xenstore_path(struct xs_handle* xs, const string path, const string value){

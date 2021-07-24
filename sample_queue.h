@@ -3,6 +3,7 @@
 
 #include <deque>
 #include <string>
+#include <vector>
 #include <unordered_map>
 #include <cassert>
 
@@ -12,9 +13,25 @@
 #define SHORT_TERM_AVG_TS_SEC 60 
 #define LONG_TERM_AVG_TS_SEC 600
 
+#define TMP_DIR -2
+#define TMP_NAME "temporary"
+#define SYS_VM_ID -1
+#define SYS_NODE_ID -1
+
+#define CPU_USAGE_SQ "cpu sample queue"
+#define NUM_OF_THREAD_SQ "num of threads sample queue"
+#define BW_USAGE_SQ "bw sample queue"
+
 using namespace std;
 
 class node;
+
+class dir{
+	public:
+	int vm;
+	int node;
+	dir(int vm=TMP_DIR, int node=TMP_DIR):vm(vm), node(node){}
+};
 
 template <class T>
 class sample_queue{
@@ -26,12 +43,17 @@ public:
 	string xs_dir;
 	string name;
 	struct xs_handle *xs;
-	node* owner;	
-
-	sample_queue(string xs_dir, struct xs_handle *xs, string name, 
-				int max_size = MAX_SAMPLE_SIZE, node* owner=NULL): 
-		xs_dir(xs_dir), xs(xs), name(name), max_sample_size(max_size), owner(owner){};
-
+	node* owner;
+	dir map_dir;	
+	
+	static unordered_map<int, unordered_map<int, unordered_map<string, vector<sample_queue<T> *>>>> data_map;
+	static vector<sample_queue<T>*> get_sq_from_data_map(string vm, string node, string metric); ///////
+	static T calculate(vector<sample_queue<T>*>& sqs, string op, long long ts); ///////
+	
+	sample_queue(string xs_dir, struct xs_handle *xs, dir md, string name = TMP_NAME,
+				int max_size = MAX_SAMPLE_SIZE, node* owner=NULL); 
+		//xs_dir(xs_dir), xs(xs), name(name), max_sample_size(max_size), owner(owner);
+	~sample_queue();
 	void calculate_averages();
 	T get_short_average();
 	T get_long_average();
@@ -58,13 +80,35 @@ private:
 //};
 
 template<class T>
+unordered_map<int, unordered_map<int, unordered_map<string, vector<sample_queue<T>*>>>> sample_queue<T>::data_map;
+
+
+template<class T>
+sample_queue<T>::sample_queue(string xs_dir, struct xs_handle *xs, dir md, string name,
+		int max_size, node* owner): 
+		xs_dir(xs_dir), xs(xs), name(name), max_sample_size(max_size), owner(owner), map_dir(md){
+	data_map[map_dir.vm][map_dir.node][name].push_back(this);
+}
+template<class T>
+sample_queue<T>::~sample_queue(){
+	vector<sample_queue<T>*>& v = data_map[map_dir.vm][map_dir.node][name];
+	for( int i=0; i < v.size(); i++)
+		if(v[i] == this){
+			v.erase(v.begin()+i);
+			break;
+		}
+}
+
+template<class T>
 void sample_queue<T>::print(int num){
-	cout << "sq: ";
+	cout << " SQ Dir: vm:" << map_dir.vm << ", node: " << map_dir.node;
+	cout << " SQ name: " << name;
+	cout << " Content: ";
 	int i = 0;
 	if( sample.size() - num >= 0)
 		i = sample.size() - num;
 	for(; i < sample.size(); i++)
-		cout << sample[i].first << ", " <<sample[i].second << " | " << endl;
+		cout << sample[i].first << ", " <<sample[i].second << " | ";
 	cout << endl;
 }
 

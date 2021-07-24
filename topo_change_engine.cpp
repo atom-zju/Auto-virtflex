@@ -14,6 +14,14 @@ static int  naive_toggle(vm* v){
 static int  average_bw_changeness(vm* v){
 	unsigned long low_thres = 150;
 	unsigned long high_thres = 700;
+
+	// test:
+	for (auto& x: sample_queue<int>::data_map[v->vm_id])
+		if(x.first >= 0)
+			for(auto& y: x.second)
+				for(auto& z: y.second)
+					z->print();
+
 	assert(v);
 	long avg_bw = v->average_bw_usage();
 	float avg_load = v->get_average_vcpu_load();

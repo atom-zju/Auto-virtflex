@@ -103,25 +103,27 @@ void pnode::grab_bw_sample(){
 	int ch = 0;
 	do{
 		// gether bw rd sample
-		string dir = generate_bw_sample_xs_dir(owner_vnode, "rd", ch);
-		if(bw_sample_xs_dir_is_valid(xs_handle, dir)){
+		string xs_dir = generate_bw_sample_xs_dir(owner_vnode, "rd", ch);
+		if(bw_sample_xs_dir_is_valid(xs_handle, xs_dir)){
 			if(ch >= bw_rd_sq_grabber.size())
-				bw_rd_sq_grabber.push_back(new sample_queue<int> ("", xs_handle, ""));
+				bw_rd_sq_grabber.push_back(new sample_queue<int> ("", xs_handle,
+								dir(SYS_VM_ID, pnode_id)));
 			bw_rd_sq_grabber[ch]->clear_sample();
-			bw_rd_sq_grabber[ch]->xs_dir = dir;
+			bw_rd_sq_grabber[ch]->xs_dir = xs_dir;
 			if( bw_rd_sq_grabber[ch]->get_sample(owner_vnode->owner_vm->start_time_sec_unix) < 0)
 				cerr << "can't get sample in grab_bw_sample" <<endl;	
 		}
 		else
 			break;
 		
-		// gather bw rd sample
-		dir = generate_bw_sample_xs_dir(owner_vnode, "wr", ch);
-		if(bw_sample_xs_dir_is_valid(xs_handle, dir)){
+		// gather bw wr sample
+		xs_dir = generate_bw_sample_xs_dir(owner_vnode, "wr", ch);
+		if(bw_sample_xs_dir_is_valid(xs_handle, xs_dir)){
                         if(ch >= bw_wr_sq_grabber.size())
-                                bw_wr_sq_grabber.push_back(new sample_queue<int> ("", xs_handle, ""));
+                                bw_wr_sq_grabber.push_back(new sample_queue<int> ("", xs_handle, 
+								dir(SYS_VM_ID, pnode_id)));
                         bw_wr_sq_grabber[ch]->clear_sample();
-                        bw_wr_sq_grabber[ch]->xs_dir = dir;
+                        bw_wr_sq_grabber[ch]->xs_dir = xs_dir;
                         if( bw_wr_sq_grabber[ch]->get_sample(owner_vnode->owner_vm->start_time_sec_unix) < 0)
                                 cerr << "can't get sample in grab_bw_sample" <<endl;
                 }
@@ -135,12 +137,14 @@ void pnode::grab_bw_sample(){
 	// put bw samples from grabber to pnode sq
 	for(int i = 0; i < bw_rd_sq_grabber.size(); i++ ){
 		if(i >= bw_rd_channel_sample.size())
-			bw_rd_channel_sample.push_back(new sample_queue<int> ("", NULL, ""));
+			bw_rd_channel_sample.push_back(new sample_queue<int> ("", NULL,
+							dir(SYS_VM_ID, pnode_id), BW_USAGE_SQ));
                 bw_rd_channel_sample[i]->merge_sample_queue(bw_rd_sq_grabber[i]);
 	}
 	for(int i = 0; i < bw_wr_sq_grabber.size(); i++ ){
                 if(i >= bw_wr_channel_sample.size())
-                        bw_wr_channel_sample.push_back(new sample_queue<int> ("", NULL, ""));
+                        bw_wr_channel_sample.push_back(new sample_queue<int> ("", NULL,
+							dir(SYS_VM_ID, pnode_id), BW_USAGE_SQ));
                 bw_wr_channel_sample[i]->merge_sample_queue(bw_wr_sq_grabber[i]);
         }
 	
@@ -188,7 +192,8 @@ void pnode::scatter_bw_sample(){
 				//cout << " vm:" << x.first << " cpu_load: " << x.second << ", bw: " << measure; 
 				if(i >= vnode_map[x.first]->bw_rd_channel_sample.size())
 					vnode_map[x.first]->bw_rd_channel_sample.push_back(
-						new sample_queue<int>("", vnode_map[x.first]->topod->xs, ""));
+						new sample_queue<int>("", vnode_map[x.first]->topod->xs,
+							dir(x.first, vnode_map[x.first]->vnode_id), BW_USAGE_SQ));
 				vnode_map[x.first]->bw_rd_channel_sample[i]->
 					insert_sample(make_pair(data.first, measure));
 			}
@@ -219,7 +224,8 @@ void pnode::scatter_bw_sample(){
 				//cout << " vm:" << x.first << " cpu_load: " << x.second << ", bw: " << measure; 
 				if(i >= vnode_map[x.first]->bw_wr_channel_sample.size())
 					vnode_map[x.first]->bw_wr_channel_sample.push_back(
-						new sample_queue<int>("", vnode_map[x.first]->topod->xs, ""));
+						new sample_queue<int>("", vnode_map[x.first]->topod->xs,
+							dir(x.first, vnode_map[x.first]->vnode_id), BW_USAGE_SQ));
 				vnode_map[x.first]->bw_wr_channel_sample[i]->
 					insert_sample(make_pair(data.first, measure));
 			}
@@ -235,40 +241,40 @@ void pnode::scatter_bw_sample(){
 	//}
 }
 
-void pnode::copy_owner_vnode_bw_usage(){
-	assert(owner_vnode);
-	/* 1. create sample queue
-	   2. merge samples from vnode sample queue */
-	// merge bw rd sq
-	int last_channel = bw_rd_channel_sample.size()-1;
-	while(bw_rd_channel_sample.size() < owner_vnode->bw_rd_channel_sample.size()){
-		bw_rd_channel_sample.push_back(new sample_queue<int>(
-				owner_vnode->bw_rd_channel_sample[last_channel+1]->name,
-				NULL,
-				owner_vnode->bw_rd_channel_sample[last_channel+1]->name));	
-		last_channel++;
-	}
-	for(int i=0; i < bw_rd_channel_sample.size() && i < owner_vnode->bw_rd_channel_sample.size(); i++){
-		assert(bw_rd_channel_sample[i]);
-		bw_rd_channel_sample[i]->merge_sample_queue(
-				owner_vnode->bw_rd_channel_sample[i]);
-	}
-	// merge bw wr sq
-	last_channel = bw_wr_channel_sample.size()-1;
-	while(bw_wr_channel_sample.size() < owner_vnode->bw_wr_channel_sample.size()){
-                bw_wr_channel_sample.push_back(new sample_queue<int>(
-				owner_vnode->bw_wr_channel_sample[last_channel+1]->name,
-				NULL,
-				owner_vnode->bw_wr_channel_sample[last_channel+1]->name));
-		last_channel++;
-        }
-        for(int i=0; i < bw_wr_channel_sample.size() && i < owner_vnode->bw_wr_channel_sample.size(); i++){
-		assert(bw_wr_channel_sample[i]);
-                bw_wr_channel_sample[i]->merge_sample_queue(
-                                owner_vnode->bw_wr_channel_sample[i]);
-        }
-
-}
+//void pnode::copy_owner_vnode_bw_usage(){
+//	assert(owner_vnode);
+//	/* 1. create sample queue
+//	   2. merge samples from vnode sample queue */
+//	// merge bw rd sq
+//	int last_channel = bw_rd_channel_sample.size()-1;
+//	while(bw_rd_channel_sample.size() < owner_vnode->bw_rd_channel_sample.size()){
+//		bw_rd_channel_sample.push_back(new sample_queue<int>(
+//				owner_vnode->bw_rd_channel_sample[last_channel+1]->name,
+//				NULL,
+//				owner_vnode->bw_rd_channel_sample[last_channel+1]->name));	
+//		last_channel++;
+//	}
+//	for(int i=0; i < bw_rd_channel_sample.size() && i < owner_vnode->bw_rd_channel_sample.size(); i++){
+//		assert(bw_rd_channel_sample[i]);
+//		bw_rd_channel_sample[i]->merge_sample_queue(
+//				owner_vnode->bw_rd_channel_sample[i]);
+//	}
+//	// merge bw wr sq
+//	last_channel = bw_wr_channel_sample.size()-1;
+//	while(bw_wr_channel_sample.size() < owner_vnode->bw_wr_channel_sample.size()){
+//                bw_wr_channel_sample.push_back(new sample_queue<int>(
+//				owner_vnode->bw_wr_channel_sample[last_channel+1]->name,
+//				NULL,
+//				owner_vnode->bw_wr_channel_sample[last_channel+1]->name));
+//		last_channel++;
+//        }
+//        for(int i=0; i < bw_wr_channel_sample.size() && i < owner_vnode->bw_wr_channel_sample.size(); i++){
+//		assert(bw_wr_channel_sample[i]);
+//                bw_wr_channel_sample[i]->merge_sample_queue(
+//                                owner_vnode->bw_wr_channel_sample[i]);
+//        }
+//
+//}
 
 long pnode::average_bw_usage(){
 	if(!owner_vnode)

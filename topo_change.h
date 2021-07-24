@@ -14,7 +14,14 @@
 #define LONG_TERM_AVG_TS_SEC 600
 #define MAX_LOCAL_CPU_SP_SIZE 10
 
-#define CPU_SQ_NAME "cpu sample queue"
+//#define TMP_DIR -2
+//#define TMP_NAME "temporary"
+//#define SYS_VM_ID -1
+//#define SYS_NODE_ID -1
+
+//#define CPU_USAGE_SQ "cpu sample queue"
+//#define NUM_OF_THREAD_SQ "num of threads sample queue"
+//#define BW_USAGE_SQ "bw sample queue"
 
 //#define UNIX_TS time(NULL)%1000000<<"\t" 
 #define UNIX_TS time(NULL)<<" [ TOPO CHANGE DAEMON ] " 

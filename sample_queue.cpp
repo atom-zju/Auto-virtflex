@@ -1,9 +1,15 @@
 #include "sample_queue.h"
 #include "util.h"
 #include <sys/time.h>
+#include <unordered_map>
 #include <iostream>
 
 using namespace std;
+
+//template<>
+//unordered_map<string, unordered_map<string, unordered_map<string, vector<sample_queue<int>*>>>> sample_queue<int>::data_map;
+//template<>
+//unordered_map<string, unordered_map<string, unordered_map<string, vector<sample_queue<float>*>>>> sample_queue<float>::data_map;
 
 template<>
 int sample_queue<int>::get_sample(long long vm_start_time_sec_unix){

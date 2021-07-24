@@ -12,7 +12,8 @@ vm::vm(int id, topo_change_d* d,string s): xs_path(s), topod(d), vm_id(id), vcpu
 	logger = new vm_logger("log/vm_"+to_string(vm_id)+"_log.txt", this);
 	assert(logger);
 	logger->init();
-	num_thread_sampleq = new sample_queue<int>(xs_path+"/numa/num_thread", topod->xs,"/num_thread");
+	num_thread_sampleq = new sample_queue<int>(xs_path+"/numa/num_thread", topod->xs,  
+		dir(vm_id, SYS_NODE_ID), NUM_OF_THREAD_SQ);
 	assert(num_thread_sampleq);
 }
 

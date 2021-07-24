@@ -46,8 +46,8 @@ void vnode::update_node(unsigned int ts){
 		cpu_map[stoi(x)].update_usage(&now);
 	}
 	if(!cpu_usage_sq){
-		cpu_usage_sq = new sample_queue<float>(string(""), NULL, 
-				CPU_SQ_NAME, MAX_SAMPLE_SIZE, (node*)this);
+		cpu_usage_sq = new sample_queue<float>(string(""), NULL,
+				dir(owner_vm->vm_id, vnode_id), CPU_USAGE_SQ, MAX_SAMPLE_SIZE, (node*)this);
 	}
 	cpu_usage_sq->get_sample();
 	//cpu_usage_sq->calculate_averages();
@@ -220,63 +220,63 @@ int vnode::change_pnode_owner_xs(bool own){
 }
 
 
-void vnode::read_bw_usage_from_xs(){
-	string tmp;
-	change_pnode_owner_xs(true);
-	/* get rd bw usage info */
-	cout << UNIX_TS<< "Read_bw_usage_from_xs: pnode: "  << pnode_id << " vnode: " << vnode_id <<endl;
-	if(file_output)
-	of << UNIX_TS<< "Read_bw_usage_from_xs: pnode: "  << pnode_id << " vnode: " << vnode_id <<endl;
-	int num_chn_rd = 0;
-	do{
-		string chn_name("/bw_usage_");
-		chn_name.append(to_string(num_chn_rd)).append("_rd");
-		
-		if(read_from_xenstore_path(topod->xs, string(xs_path)+chn_name+"/curr_sample_num", tmp) == 0){
-			if(bw_rd_channel_sample.size() == num_chn_rd){
-				bw_rd_channel_sample.push_back(new sample_queue<int>(
-						string(xs_path)+chn_name,
-						topod->xs,
-						chn_name));
-			}
-			assert(bw_rd_channel_sample[num_chn_rd]);
-			if(bw_rd_channel_sample[num_chn_rd]->
-					get_sample(((long long)(owner_vm->start_time_sec_unix))))
-				cerr << "Error getting sample from xs for " << chn_name << endl;
-		}
-		else{
-			break;
-		}
-		num_chn_rd++;
-	}while(1);	
-		
-	/* get wr bw usage info */
-	int num_chn_wr = 0;
-	do{
-		string chn_name("/bw_usage_");
-		chn_name.append(to_string(num_chn_wr)).append("_wr");
-		
-		if(read_from_xenstore_path(topod->xs, string(xs_path)+chn_name+"/curr_sample_num", tmp) == 0){
-			if(bw_wr_channel_sample.size() == num_chn_wr){
-				bw_wr_channel_sample.push_back(new sample_queue<int>(
-						string(xs_path)+chn_name,
-						topod->xs,
-						chn_name));
-                        }
-			assert(bw_wr_channel_sample[num_chn_wr]);
-			if(bw_wr_channel_sample[num_chn_wr]->
-					get_sample(((long long)(owner_vm->start_time_sec_unix))))
-				cerr << "Error getting sample from xs for " << chn_name << endl;
-		}
-		else{
-			break;
-		}
-		num_chn_wr++;
-	}while(1);	
-	
-	assert(num_chn_rd == num_chn_wr);
-	
-}
+//void vnode::read_bw_usage_from_xs(){
+//	string tmp;
+//	change_pnode_owner_xs(true);
+//	/* get rd bw usage info */
+//	cout << UNIX_TS<< "Read_bw_usage_from_xs: pnode: "  << pnode_id << " vnode: " << vnode_id <<endl;
+//	if(file_output)
+//	of << UNIX_TS<< "Read_bw_usage_from_xs: pnode: "  << pnode_id << " vnode: " << vnode_id <<endl;
+//	int num_chn_rd = 0;
+//	do{
+//		string chn_name("/bw_usage_");
+//		chn_name.append(to_string(num_chn_rd)).append("_rd");
+//		
+//		if(read_from_xenstore_path(topod->xs, string(xs_path)+chn_name+"/curr_sample_num", tmp) == 0){
+//			if(bw_rd_channel_sample.size() == num_chn_rd){
+//				bw_rd_channel_sample.push_back(new sample_queue<int>(
+//						string(xs_path)+chn_name,
+//						topod->xs,
+//						chn_name));
+//			}
+//			assert(bw_rd_channel_sample[num_chn_rd]);
+//			if(bw_rd_channel_sample[num_chn_rd]->
+//					get_sample(((long long)(owner_vm->start_time_sec_unix))))
+//				cerr << "Error getting sample from xs for " << chn_name << endl;
+//		}
+//		else{
+//			break;
+//		}
+//		num_chn_rd++;
+//	}while(1);	
+//		
+//	/* get wr bw usage info */
+//	int num_chn_wr = 0;
+//	do{
+//		string chn_name("/bw_usage_");
+//		chn_name.append(to_string(num_chn_wr)).append("_wr");
+//		
+//		if(read_from_xenstore_path(topod->xs, string(xs_path)+chn_name+"/curr_sample_num", tmp) == 0){
+//			if(bw_wr_channel_sample.size() == num_chn_wr){
+//				bw_wr_channel_sample.push_back(new sample_queue<int>(
+//						string(xs_path)+chn_name,
+//						topod->xs,
+//						chn_name));
+//                        }
+//			assert(bw_wr_channel_sample[num_chn_wr]);
+//			if(bw_wr_channel_sample[num_chn_wr]->
+//					get_sample(((long long)(owner_vm->start_time_sec_unix))))
+//				cerr << "Error getting sample from xs for " << chn_name << endl;
+//		}
+//		else{
+//			break;
+//		}
+//		num_chn_wr++;
+//	}while(1);	
+//	
+//	assert(num_chn_rd == num_chn_wr);
+//	
+//}
 
 void vnode::clear_bw_sq(){
 	for(auto&& sq: bw_rd_channel_sample){
