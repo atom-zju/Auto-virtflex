@@ -277,3 +277,12 @@ void vnode::read_bw_usage_from_xs(){
 	assert(num_chn_rd == num_chn_wr);
 	
 }
+
+void vnode::clear_bw_sq(){
+	for(auto&& sq: bw_rd_channel_sample){
+		sq->clear_sample();
+	}
+	for(auto&& sq: bw_wr_channel_sample){
+		sq->clear_sample();
+	}
+}

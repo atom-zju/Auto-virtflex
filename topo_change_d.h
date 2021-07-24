@@ -20,6 +20,7 @@ public:
 class topo_change_d {
 	friend class vm;
 	friend class vnode;
+	friend class pnode;
 	friend class cpu;
 	friend class topo_change_engine;
 	friend class vm_logger;

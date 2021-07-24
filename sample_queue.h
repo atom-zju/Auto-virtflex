@@ -36,8 +36,12 @@ public:
 	T get_short_average();
 	T get_long_average();
 	int get_sample(long long vm_start_time_sec_unix = 0);
+	void clear_sample();
 	T average_value_since_ts(long long valid_ts);
 	void merge_sample_queue(sample_queue* s);
+	pair<long long, T> get_nearst_data_point(long long ux_ts_ms);
+	void insert_sample(pair<long long, T> p );
+	void print(int num = 15);
 private:	
 	//static unordered_map<string, void(*)()> get_sample_func_map;
 	int get_sample_from_xs(long long vm_start_time_sec_unix);
@@ -52,6 +56,70 @@ private:
 //unordered_map<string, void (*)()> sample_queue<T>::get_sample_func_map = {
 //	{"cpu sample queue", (void (*)())get_cpu_usage_sample}
 //};
+
+template<class T>
+void sample_queue<T>::print(int num){
+	cout << "sq: ";
+	int i = 0;
+	if( sample.size() - num >= 0)
+		i = sample.size() - num;
+	for(; i < sample.size(); i++)
+		cout << sample[i].first << ", " <<sample[i].second << " | " << endl;
+	cout << endl;
+}
+
+template <class T>
+void sample_queue<T>::clear_sample(){
+	this->sample.clear();
+	long_term_average = -1;
+	short_term_average = -1;	
+}
+
+template <class T >
+void  sample_queue<T>::insert_sample(pair<long long, T> p ){
+	int lo=0, hi = sample.size()-1;
+	if(sample.empty() || p.first > sample[sample.size()-1].first){
+		sample.push_back(p);
+		return;
+	}
+	if(p.first < sample[0].first){
+		sample.insert(sample.begin(), p);
+		return;
+	}
+	while(lo <= hi){
+		int mid = (hi-lo)/2+ lo;
+		if(sample[mid].first == p.first)
+			// duplicate sample, no need to insert
+			return;
+		if(p.first < sample[mid].first)
+			hi = mid-1;
+		else 
+			lo = mid+1;
+	}
+	sample.insert(sample.begin()+lo, p);	
+}
+template<class T>
+pair<long long, T> sample_queue<T>::get_nearst_data_point(long long ux_ts_ms){
+	int lo = 0, hi= sample.size()-1;
+	if(sample.empty())
+		return make_pair(-1, -1);
+	if(ux_ts_ms < sample[0].first)
+		return sample[0];
+	if(ux_ts_ms > sample[sample.size()-1].first)
+		return sample[sample.size()-1];
+	while(lo <= hi){
+		int mid = (hi-lo)/2+lo;
+		if(sample[mid].first == ux_ts_ms)
+			return sample[mid];
+		if(ux_ts_ms < sample[mid].first)
+			hi = mid-1;
+		else
+			lo = mid+1;
+	}
+	if (ux_ts_ms - sample[hi].first <= sample[lo].first - ux_ts_ms)
+		return sample[hi];
+	return sample[lo];
+}
 
 /* Crawling samples from xenstore doesn't have any valid timestamp restrictions,
    crawl it all. */
