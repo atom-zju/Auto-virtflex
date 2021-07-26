@@ -11,6 +11,12 @@ using namespace std;
 //template<>
 //unordered_map<string, unordered_map<string, unordered_map<string, vector<sample_queue<float>*>>>> sample_queue<float>::data_map;
 
+
+bool is_guest_vm(int vm){ return vm > 0; }
+bool is_system_vm(int vm){ return vm == SYS_VM_ID;}
+bool is_guest_node(int node){ return node >= 0;}
+bool is_system_node(int node){ return node == SYS_NODE_ID; }
+
 template<>
 int sample_queue<int>::get_sample(long long vm_start_time_sec_unix){
 	if(!xs_dir.empty()){

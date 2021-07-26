@@ -33,6 +33,11 @@ class dir{
 	dir(int vm=TMP_DIR, int node=TMP_DIR):vm(vm), node(node){}
 };
 
+bool is_guest_vm(int vm);
+bool is_system_vm(int vm);
+bool is_guest_node(int node);
+bool is_system_node(int node);
+
 template <class T>
 class sample_queue{
 public:
@@ -47,8 +52,10 @@ public:
 	dir map_dir;	
 	
 	static unordered_map<int, unordered_map<int, unordered_map<string, vector<sample_queue<T> *>>>> data_map;
-	static vector<sample_queue<T>*> get_sq_from_data_map(string vm, string node, string metric); ///////
-	static T calculate(vector<sample_queue<T>*>& sqs, string op, long long ts); ///////
+	//static vector<sample_queue<T>*> get_sq_from_data_map(string vm, string node, string metric); ///////
+	static T calculate_avg(vector<sample_queue<T>*>& sqs, long long ux_ts_ms); ///////
+	static vector<int> vm_list();
+	static vector<int> vnode_list(int vm);
 	
 	sample_queue(string xs_dir, struct xs_handle *xs, dir md, string name = TMP_NAME,
 				int max_size = MAX_SAMPLE_SIZE, node* owner=NULL); 
@@ -82,13 +89,13 @@ private:
 template<class T>
 unordered_map<int, unordered_map<int, unordered_map<string, vector<sample_queue<T>*>>>> sample_queue<T>::data_map;
 
-
 template<class T>
 sample_queue<T>::sample_queue(string xs_dir, struct xs_handle *xs, dir md, string name,
 		int max_size, node* owner): 
 		xs_dir(xs_dir), xs(xs), name(name), max_sample_size(max_size), owner(owner), map_dir(md){
 	data_map[map_dir.vm][map_dir.node][name].push_back(this);
 }
+
 template<class T>
 sample_queue<T>::~sample_queue(){
 	vector<sample_queue<T>*>& v = data_map[map_dir.vm][map_dir.node][name];
@@ -97,6 +104,39 @@ sample_queue<T>::~sample_queue(){
 			v.erase(v.begin()+i);
 			break;
 		}
+}
+
+template<class T>
+vector<int> sample_queue<T>::vm_list(){
+	vector<int> res;
+	for(auto& x: sample_queue<T>::data_map)
+		if(is_guest_vm(x.first))
+			res.push_back(x.first);
+	return res;
+}
+
+template<class T>
+vector<int> sample_queue<T>::vnode_list(int vm_id){
+	vector<int> res;
+	if(sample_queue<T>::data_map.find(vm_id) == sample_queue<T>::data_map.end())
+		return res;
+	for(auto& x: sample_queue<T>::data_map[vm_id])
+		if(is_guest_node(x.first))
+			res.push_back(x.first);
+	return res;
+}
+
+template<class T>
+T sample_queue<T>::calculate_avg(vector<sample_queue<T>*>& sqs, long long ux_ts_ms){
+	T res = 0;
+	int cnt = 0;
+	for(auto& sq: sqs){
+		res += sq->average_value_since_ts(ux_ts_ms);
+		cnt++;
+	}
+	if(cnt == 0 )
+		return 0;
+	return res/(T)cnt;
 }
 
 template<class T>

@@ -22,6 +22,13 @@ vm* topo_change_d::get_vm_by_id(int id){
 	return NULL;
 }
 
+int topo_change_d::vnode_to_pnode(int vm_id, int vnode_id){
+	if(vm_map.find(vm_id) == vm_map.end() || 
+		vm_map[vm_id]->vnode_map.find(vnode_id) == vm_map[vm_id]->vnode_map.end())
+		return -2;
+	return vm_map[vm_id]->vnode_map[vnode_id]->pnode_id;
+}
+
 topo_change_d::topo_change_d(){
 	ts = 0;
 	xs =  xs_daemon_open();

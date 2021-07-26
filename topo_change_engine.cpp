@@ -1,6 +1,7 @@
 #include "topo_change_engine.h"
 #include <iostream>
 #include <cassert>
+#include "sys_map.h"
 
 /*       Topology changeness              */
 static int  naive_toggle(vm* v){
@@ -16,11 +17,12 @@ static int  average_bw_changeness(vm* v){
 	unsigned long high_thres = 700;
 
 	// test:
-	for (auto& x: sample_queue<int>::data_map[v->vm_id])
-		if(x.first >= 0)
-			for(auto& y: x.second)
-				for(auto& z: y.second)
-					z->print();
+	//for (auto& x: sample_queue<int>::data_map[v->vm_id])
+	//	if(x.first >= 0)
+	//		for(auto& y: x.second)
+	//			for(auto& z: y.second)
+	//				z->print();
+	
 
 	assert(v);
 	long avg_bw = v->average_bw_usage();
@@ -183,6 +185,16 @@ void topo_change_engine::config(){
 }
 
 void topo_change_engine::calculate_topo_changeness(){
+	// testing sys_map class	
+	sys_map<int> topo_map(TOPO_SYS_MAP);
+	topo_map.update(topod);
+	topo_map.print();
+	sys_map<float> vcpu_usage_map(VCPU_USAGE_SYS_MAP);
+	vcpu_usage_map.update(topod, (time(NULL)-1)*1000);
+	vcpu_usage_map.print();
+	float r = vcpu_usage_map.vm_view(1, 3).data;
+	cout << "vm_view(1, 3): " << (vcpu_usage_map.vm_view(1, 3).is_empty()? -2333.0: r) << endl;
+
 	for(auto& x: topod->vm_map){
 		if(x.first == 0)
 			continue;
