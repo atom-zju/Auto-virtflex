@@ -53,8 +53,8 @@ void pnode::update_vnode_map(int ts){
 			}
 		}
 	}
-	cout << UNIX_TS<< "\ttotal_vnodes: " << total_vnodes << endl;
-	cout << UNIX_TS<< "\tactive_vnodes: " << active_vnodes << endl;
+	//cout << UNIX_TS<< "\ttotal_vnodes: " << total_vnodes << endl;
+	//cout << UNIX_TS<< "\tactive_vnodes: " << active_vnodes << endl;
 	
 	if(owner_vnode == NULL){
 		pick_owner_vnode();
@@ -183,13 +183,14 @@ void pnode::scatter_bw_sample(){
 				acc+=nearst_p.second;
 			}
 			//cout << " acc: "  << acc << " ||||| ";
+			cout << " Scatter bw samples: " << data.first << ", " << data.second << endl; 
 			for(auto& x: m){
 				int measure;
 				if( acc == 0 )
 					measure = 0;
 				else
 					measure = (int) (data.second * (x.second / acc));
-				//cout << " vm:" << x.first << " cpu_load: " << x.second << ", bw: " << measure; 
+				cout << " vm:" << x.first << " cpu_load: " << x.second << ", bw: " << measure; 
 				if(i >= vnode_map[x.first]->bw_rd_channel_sample.size())
 					vnode_map[x.first]->bw_rd_channel_sample.push_back(
 						new sample_queue<int>("", vnode_map[x.first]->topod->xs,
@@ -200,7 +201,7 @@ void pnode::scatter_bw_sample(){
 			//cout << endl;		
 		}
 	}
-	// scatter rd samples
+	// scatter wr samples
 	for(int i=0; i < bw_wr_sq_grabber.size(); i++){
 		for(auto& data: bw_wr_sq_grabber[i]->sample){
 			// for each sample point (timestamp, bw_measure)
@@ -221,7 +222,7 @@ void pnode::scatter_bw_sample(){
 					measure = 0;
 				else
 					measure = (int) (data.second * (x.second / acc));
-				//cout << " vm:" << x.first << " cpu_load: " << x.second << ", bw: " << measure; 
+				cout << " vm:" << x.first << " cpu_load: " << x.second << ", bw: " << measure; 
 				if(i >= vnode_map[x.first]->bw_wr_channel_sample.size())
 					vnode_map[x.first]->bw_wr_channel_sample.push_back(
 						new sample_queue<int>("", vnode_map[x.first]->topod->xs,

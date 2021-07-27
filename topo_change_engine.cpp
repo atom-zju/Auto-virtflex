@@ -176,6 +176,12 @@ static int first_available_candidate(vm* v, int num, vector<int>& can){
 	return 0;
 }
 
+topo_change_engine::~topo_change_engine(){
+	for(auto& x: sys_map_table)
+		if(x.second)
+			delete x.second;
+}
+
 void topo_change_engine::config(){
 	topo_changeness = &average_bw_changeness;
 	//topo_changeness = &average_vcpu_load_changeness;
@@ -192,8 +198,11 @@ void topo_change_engine::calculate_topo_changeness(){
 	sys_map<float> vcpu_usage_map(VCPU_USAGE_SYS_MAP);
 	vcpu_usage_map.update(topod, (time(NULL)-1)*1000);
 	vcpu_usage_map.print();
-	float r = vcpu_usage_map.vm_view(1, 3).data;
-	cout << "vm_view(1, 3): " << (vcpu_usage_map.vm_view(1, 3).is_empty()? -2333.0: r) << endl;
+	sys_map<int> bw_usage_map(BW_USAGE_SYS_MAP);
+	bw_usage_map.update(topod, (time(NULL)-5)*1000);
+	bw_usage_map.print();
+	//float r = vcpu_usage_map.vm_view(1, 3).data;
+	//cout << "vm_view(1, 3): " << (vcpu_usage_map.vm_view(1, 3).is_empty()? -2333.0: r) << endl;
 
 	for(auto& x: topod->vm_map){
 		if(x.first == 0)
@@ -207,11 +216,78 @@ void topo_change_engine::calculate_topo_changeness(){
 	}
 }
 
-void topo_change_engine::topo_change_plan(){
-		
+int topo_change_engine::get_sys_topo(sys_map<int>& old_sys){
+	if(sys_map_table.find(TOPO_SYS_MAP) == sys_map_table.end())
+		return -1;	
+	old_sys = *(sys_map<int>*)sys_map_table[TOPO_SYS_MAP];
+	if(old_sys.ux_ts_ms < (time(NULL)-5)*1000)
+		old_sys.update(topod);
+	return 0;
+}
+
+void topo_change_engine::generate_sys_map_table(){
+	if(sys_map_table.find(TOPO_SYS_MAP) == sys_map_table.end())
+		sys_map_table[TOPO_SYS_MAP] = new sys_map<int>(TOPO_SYS_MAP);
+	if(sys_map_table.find(VCPU_USAGE_SYS_MAP) == sys_map_table.end())
+                sys_map_table[VCPU_USAGE_SYS_MAP] = new sys_map<float>(VCPU_USAGE_SYS_MAP);
+        if(sys_map_table.find(BW_USAGE_SYS_MAP) == sys_map_table.end())
+                sys_map_table[BW_USAGE_SYS_MAP] = new sys_map<int>(BW_USAGE_SYS_MAP);
+        //if(sys_map_table.find(TOPO_SYS_MAP) == sys_map_table.end())
+        //        sys_map_table[TOPO_SYS_MAP] = new sys_map<int>(TOPO_SYS_MAP);
+}
+
+int topo_change_engine::generate_new_topo_map(unordered_map<string, sys_map_base*>& sys_map_tbl, sys_map<int>& new_sys){
+	if(sys_map_tbl.find(TOPO_SYS_MAP) == sys_map_tbl.end() ||
+           sys_map_tbl.find(BW_USAGE_SYS_MAP) == sys_map_tbl.end())
+		return -1;
+	for(auto& x: sys_map_tbl){
+		// get data for the most recent 5 sec
+		x.second->update(topod, (time(NULL)-5)*1000);
+	}
+	sys_map<int>& old_sys = *(sys_map<int>*)sys_map_tbl[TOPO_SYS_MAP]; 
+	new_sys = old_sys;
+	sys_map<int>& bw_sys = *(sys_map<int>*)sys_map_tbl[BW_USAGE_SYS_MAP];
+	
+	//for(auto& vm_id: old_sys.vm_list())
+	//	if( bw_sys.vm_view(vm_id) > 700 ) ///// able to easily do aggregate operations
+	//		new_sys.vm_view() = 1; //////	able to change value easily,
+	//	else if(bw_sys.vm_view(vm_id) < 150) //// able to return min/max idx given 1d idx
+	//		new_sys.vm_view() = 0;//////
+	return 0;
+}
+
+int topo_change_engine::generate_topo_change_events(sys_map<int>& new_sys, sys_map<int>& old_sys,
+                                                deque<topo_change_event>& e){
+	for(auto& vm_id: old_sys.vm_list())
+		for(auto& vnode_id: old_sys.vnode_list(vm_id)){
+			auto old_data = old_sys.vm_view(vm_id,vnode_id);
+			auto new_data = new_sys.vm_view(vm_id,vnode_id);
+			assert(!old_data.is_empty() && !new_data.is_empty());
+			// shrink
+			if(old_data.data == 1 && new_data.data == 0){
+				e.insert(e.begin(), topo_change_event(vm_id, -1, vector<int>({vnode_id})));
+			}
+			// expand
+			else if(old_data.data == 0 && new_data.data == 1){
+				e.push_back(topo_change_event(vm_id, 1, vector<int>({vnode_id})));
+			}
+		}
+	return 0;	
 }
 
 int topo_change_engine::generate_events(deque<topo_change_event>& e){
+	generate_sys_map_table();
+	sys_map<int> old_sys, new_sys;
+	if(generate_new_topo_map(sys_map_table, new_sys)< 0)
+		return -1;
+	if(get_sys_topo(old_sys) <0)
+		return -1;
+	if(generate_topo_change_events(new_sys, old_sys, e) < 0)
+		return -1;
+	return 0;
+}
+
+int topo_change_engine::generate_events2(deque<topo_change_event>& e){
 	assert(topo_changeness);
 	assert(shrink_candidate);
 	assert(e.empty());
@@ -224,6 +300,9 @@ int topo_change_engine::generate_events(deque<topo_change_event>& e){
 	// calculate topo_changeness for each of the VMs
 	calculate_topo_changeness();
 	// make a topology change plan
+	// sys_map generate
+	// decision topo_change? if yes generate new topo_sys_map
+	// generate step by step events according to new topo_sys_map
 	//topo_change_plan();
 	// insert into topo_change priority queue
 	// process shrink/expansion events	

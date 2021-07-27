@@ -131,11 +131,14 @@ T sample_queue<T>::calculate_avg(vector<sample_queue<T>*>& sqs, long long ux_ts_
 	T res = 0;
 	int cnt = 0;
 	for(auto& sq: sqs){
-		res += sq->average_value_since_ts(ux_ts_ms);
-		cnt++;
+		T tmp = sq->average_value_since_ts(ux_ts_ms);
+		if(tmp >= 0){
+			res += tmp;
+			cnt++;
+		}
 	}
 	if(cnt == 0 )
-		return 0;
+		return -1;
 	return res/(T)cnt;
 }
 
@@ -267,7 +270,9 @@ T sample_queue<T>::average_value_since_ts(long long valid_ts){
 		sum+= sample[i].second;
 		cnt++;
 	}
-	return cnt? sum/(long long)cnt: -1;
+	//cout << "cut off ts: " << valid_ts << endl;
+	//cout << "valid sample cnt: " << cnt << endl;
+	return cnt? sum/(T)cnt: -1;
 }
 
 template <class T>

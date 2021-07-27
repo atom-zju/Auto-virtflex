@@ -34,8 +34,20 @@ public:
 	bool is_empty(){ return empty; }
 };
 
+class sys_map_base{
+public:
+	virtual string get_name() = 0;
+	virtual vector<int> vm_list() = 0;
+	virtual vector<int> vnode_list(int) = 0;
+	virtual vector<int> pnode_list() = 0 ;
+	virtual vector<int> vm_list_within_pnode(int) = 0 ;
+	virtual int update(topo_change_d*, long long since_ux_ts_ms) = 0;
+	//virtual map_record<T> vm_view(int vm_id, int vnode_id);
+	//virtual map_record<T> pnode_view(int pnode_id, int vm_id);
+};
+
 template <class T>
-class sys_map{
+class sys_map: public sys_map_base {
 	public:
 	string name;
 	long long ux_ts_ms;
@@ -47,10 +59,23 @@ class sys_map{
 	vector<int> pnode_list();
 	vector<int> vm_list_within_pnode(int pnode_id);
 	sys_map(string name): name(name), ux_ts_ms(0){}
+	sys_map(): ux_ts_ms(0){}
 	void push_back(map_record<T> m);
 	void print();
-	map_record<T> vm_view(int vm_id, int vnode_id);/////////
-	map_record<T> pnode_view(int pnode_id, int vm_id);//////////
+	string get_name();
+	map_record<T>& vm_view(int vm_id, int vnode_id);
+	map_record<T>& pnode_view(int pnode_id, int vm_id);
+	void normalize(); /////////
+	void multiply(T scalar); ////////
+	void multiply(sys_map_base*); /////////
+	void sum(T scalar); ////////
+	void mutiply(sys_map_base* ); /////////
+	T vm_avg(int vm_id, sys_map_base* mask);///////
+	T pnode_sum(int pnode_id, sys_map_base* mask);////////
+	int min_vnode_in_vm(int vm_id);///////
+	int min_vm_in_pnode(int pnode_id);///////
+	int max_vnode_in_vm(int vm_id);////////
+	int max_vm_in_pnode(int pnode_id);//////////
 	int update(topo_change_d* topod, long long since_ux_ts_ms=0);
 };
 
@@ -68,6 +93,11 @@ void sys_map<T>::print(){
 		}
 		cout << endl;
 	}
+}
+
+template<class T>
+string sys_map<T>::get_name(){
+	return name;
 }
 
 template<class T>
@@ -121,21 +151,16 @@ vector<int> sys_map<T>::vm_list_within_pnode(int pnode_id){
 }
 
 template<class T>
-map_record<T> sys_map<T>::vm_view(int vm_id, int vnode_id){
-	if(vm_map.find(vm_id) == vm_map.end() || vm_map[vm_id].find(vnode_id) == vm_map[vm_id].end()){
-		cout << "empty record" << endl;
-		return map_record<T>();
-	}
+map_record<T>& sys_map<T>::vm_view(int vm_id, int vnode_id){
+	assert(vm_map.find(vm_id) != vm_map.end() && 
+		vm_map[vm_id].find(vnode_id) != vm_map[vm_id].end());
 	return records[vm_map[vm_id][vnode_id]];
 }
 
 template<class T>
-map_record<T> sys_map<T>::pnode_view(int pnode_id, int vm_id){
-	if(pnode_map.find(pnode_id) == pnode_map.end() || 
-			pnode_map[pnode_id].find(vm_id) == pnode_map[pnode_id].end()){
-		cout << "empty record" << endl;
-		return map_record<T>();
-	}
+map_record<T>& sys_map<T>::pnode_view(int pnode_id, int vm_id){
+	assert(pnode_map.find(pnode_id) != pnode_map.end() && 
+			pnode_map[pnode_id].find(vm_id) != pnode_map[pnode_id].end());
 	return records[pnode_view[pnode_id][vm_id]];
 }
 
