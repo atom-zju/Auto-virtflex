@@ -183,14 +183,14 @@ void pnode::scatter_bw_sample(){
 				acc+=nearst_p.second;
 			}
 			//cout << " acc: "  << acc << " ||||| ";
-			cout << " Scatter bw samples: " << data.first << ", " << data.second << endl; 
+			//cout << " Scatter bw samples: " << data.first << ", " << data.second << endl; 
 			for(auto& x: m){
 				int measure;
 				if( acc == 0 )
 					measure = 0;
 				else
 					measure = (int) (data.second * (x.second / acc));
-				cout << " vm:" << x.first << " cpu_load: " << x.second << ", bw: " << measure; 
+				//cout << " vm:" << x.first << " cpu_load: " << x.second << ", bw: " << measure; 
 				if(i >= vnode_map[x.first]->bw_rd_channel_sample.size())
 					vnode_map[x.first]->bw_rd_channel_sample.push_back(
 						new sample_queue<int>("", vnode_map[x.first]->topod->xs,
@@ -222,7 +222,7 @@ void pnode::scatter_bw_sample(){
 					measure = 0;
 				else
 					measure = (int) (data.second * (x.second / acc));
-				cout << " vm:" << x.first << " cpu_load: " << x.second << ", bw: " << measure; 
+				//cout << " vm:" << x.first << " cpu_load: " << x.second << ", bw: " << measure; 
 				if(i >= vnode_map[x.first]->bw_wr_channel_sample.size())
 					vnode_map[x.first]->bw_wr_channel_sample.push_back(
 						new sample_queue<int>("", vnode_map[x.first]->topod->xs,

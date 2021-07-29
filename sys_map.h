@@ -61,21 +61,28 @@ class sys_map: public sys_map_base {
 	sys_map(string name): name(name), ux_ts_ms(0){}
 	sys_map(): ux_ts_ms(0){}
 	void push_back(map_record<T> m);
+	void del_entry_vm_view(int vm_id, int vnode_id);
 	void print();
 	string get_name();
 	map_record<T>& vm_view(int vm_id, int vnode_id);
 	map_record<T>& pnode_view(int pnode_id, int vm_id);
+	void prune(sys_map<int>& topo_mask);
+	void same_dimension_zero_fill(sys_map<int>& topo_mask);
+	bool record_exist_vm_view(int vm_id, int vnode_id);
+	bool record_exist_pnode_view(int pnode_id, int vm_id);
 	void normalize(); /////////
-	void multiply(T scalar); ////////
-	void multiply(sys_map_base*); /////////
-	void sum(T scalar); ////////
-	void mutiply(sys_map_base* ); /////////
-	T vm_avg(int vm_id, sys_map_base* mask);///////
-	T pnode_sum(int pnode_id, sys_map_base* mask);////////
-	int min_vnode_in_vm(int vm_id);///////
-	int min_vm_in_pnode(int pnode_id);///////
-	int max_vnode_in_vm(int vm_id);////////
-	int max_vm_in_pnode(int pnode_id);//////////
+	void mul(T scalar); ////////
+	void mul(sys_map_base*); /////////
+	void add(T scalar); ////////
+	void add(sys_map_base* ); /////////
+	void negate();
+	T vm_avg(int vm_id, sys_map<int>* mask = NULL);///////
+	T vm_sum(int vm_id, sys_map<int>* mask = NULL);///////
+	T pnode_sum(int pnode_id, sys_map<int>* mask = NULL);////////
+	int min_vnode_in_vm(int vm_id, sys_map<int>* mask = NULL);///////
+	int min_vm_in_pnode(int pnode_id, sys_map<int>* mask = NULL);///////
+	int max_vnode_in_vm(int vm_id, sys_map<int>* mask = NULL);////////
+	int max_vm_in_pnode(int pnode_id, sys_map<int>* mask = NULL);//////////
 	int update(topo_change_d* topod, long long since_ux_ts_ms=0);
 };
 
@@ -115,11 +122,181 @@ void sys_map<T>::push_back(map_record<T> m){
 }
 
 template<class T>
+bool sys_map<T>::record_exist_vm_view(int vm_id, int vnode_id){
+	if(vm_map.find(vm_id) == vm_map.end())
+		return false;
+	if(vm_map[vm_id].find(vnode_id) == vm_map[vm_id].end())
+		return false;
+	return true;
+}
+template<class T>
+bool sys_map<T>::record_exist_pnode_view(int pnode_id, int vm_id){
+        if(pnode_map.find(pnode_id) == pnode_map.end())
+                return false;
+        if(pnode_map[pnode_id].find(vm_id) == pnode_map[pnode_id].end())
+                return false;
+        return true;
+}
+
+template<class T>
+void sys_map<T>::negate(){
+	for(auto& vm_id: vm_list()){
+		for(auto& vnode_id: vnode_list(vm_id)){
+			vm_view(vm_id, vnode_id).data = (vm_view(vm_id, vnode_id).data == 0);
+		}
+	}
+}
+template<class T>
+void sys_map<T>::same_dimension_zero_fill(sys_map<int>& topo_mask){
+	for(auto& vm_id: topo_mask.vm_list()){
+		for(auto& vnode_id: topo_mask.vnode_list(vm_id)){
+			if(!record_exist_vm_view(vm_id, vnode_id)){
+				int pnode_id = topo_mask.vm_view(vm_id, vnode_id).pnode_id;
+				map_record<T> m(vm_id, vnode_id, pnode_id, 0);
+				push_back(m);
+			}
+		}	
+	}
+}
+
+template<class T>
+void sys_map<T>::del_entry_vm_view(int vm_id, int vnode_id){
+	if(vm_map.find(vm_id) == vm_map.end() ||
+		vm_map[vm_id].find(vnode_id) == vm_map[vm_id].end())
+		return;
+	int idx = vm_map[vm_id][vnode_id];
+	auto r = records[idx];
+	records.erase(records.begin()+idx);
+	vm_map[vm_id].erase(vnode_id);
+	if(vm_map[vm_id].size() == 0)
+		vm_map.erase(vm_id);
+	pnode_map[r.pnode_id].erase(r.vm_id);
+	if(pnode_map[r.pnode_id].size() == 0)
+		pnode_map.erase(r.pnode_id);
+}
+
+template<class T>
+void sys_map<T>::mul(T scalar){
+	for(auto& vm_id: vm_list())
+		for(auto& vnode_id: vnode_list(vm_id)){
+			vm_view(vm_id, vnode_id).data*= scalar;
+		}
+}
+
+
+template<class T>
+void sys_map<T>::add(T scalar){
+	for(auto& vm_id: vm_list())
+		for(auto& vnode_id: vnode_list(vm_id)){
+			vm_view(vm_id, vnode_id).data += scalar;
+		}
+}
+
+template<class T>
+T sys_map<T>::vm_avg(int vm_id, sys_map<int>* mask){
+	T res = 0;
+	int cnt = 0;
+	assert(vm_map.find(vm_id) != vm_map.end());
+	for(auto& vnode_id: vnode_list(vm_id)){
+		if(mask && mask->vm_view(vm_id, vnode_id).data != 0) {
+			res += vm_view(vm_id, vnode_id).data;
+			cnt++;	
+		}
+	}
+	return cnt? res/(T)cnt: -1;
+}
+template<class T>
+T sys_map<T>::vm_sum(int vm_id, sys_map<int>* mask){
+	T res = 0;
+	assert(vm_map.find(vm_id) != vm_map.end());
+	for(auto& vnode_id: vnode_list(vm_id)){
+		if(mask && mask->vm_view(vm_id, vnode_id).data != 0) {
+			res += vm_view(vm_id, vnode_id).data;
+		}
+	}
+	return res;
+}
+template<class T>
+T sys_map<T>::pnode_sum(int pnode_id, sys_map<int>* mask){
+        T res = 0;
+        assert(pnode_map.find(pnode_id) != pnode_map.end());
+        for(auto& vm_id: vm_list_within_pnode(pnode_id)){
+		if(mask && mask->pnode_view(pnode_id, vm_id).data != 0) {
+                	res += pnode_view(pnode_id, vm_id).data;
+		}
+        }
+        return res;
+}
+
+template<class T>
+int sys_map<T>::min_vnode_in_vm(int vm_id, sys_map<int>* mask){
+	T min_res;
+	int min_idx = -1;
+	bool first = true;
+	assert(vm_map.find(vm_id) != vm_map.end());
+	for(auto& vnode_id: vnode_list(vm_id)){
+		if(mask && mask->vm_view(vm_id, vnode_id).data == 0)
+			continue;
+		if(first){
+			first = !first;
+			min_res = vm_view(vm_id, vnode_id).data;
+			min_idx = vnode_id;	
+		}
+		else if(vm_view(vm_id, vnode_id).data < min_res){
+			min_res = vm_view(vm_id, vnode_id).data;
+			min_idx = vnode_id;
+		}
+	}
+	return min_idx;
+}
+
+template<class T>
+int sys_map<T>::min_vm_in_pnode(int pnode_id, sys_map<int>* mask){
+	return -1;
+}
+template<class T>
+int sys_map<T>::max_vnode_in_vm(int vm_id, sys_map<int>* mask){
+	T max_res;
+	int max_idx = -1;
+	bool first = true;
+	assert(vm_map.find(vm_id) != vm_map.end());
+	for(auto& vnode_id: vnode_list(vm_id)){
+		if(mask && mask->vm_view(vm_id, vnode_id).data == 0)
+			continue;
+		if(first){
+			first = !first;
+			max_res = vm_view(vm_id, vnode_id).data;
+			max_idx = vnode_id;	
+		}
+		else if(vm_view(vm_id, vnode_id).data > max_res){
+			max_res = vm_view(vm_id, vnode_id).data;
+			max_idx = vnode_id;
+		}
+	}
+	return max_idx;
+}
+template<class T>
+int sys_map<T>::max_vm_in_pnode(int pnode_id, sys_map<int>* mask){
+	return -1;
+}
+
+template<class T>
 vector<int> sys_map<T>::vm_list(){
 	vector<int> res;
 	for(auto& x: vm_map)
 		res.push_back(x.first);
 	return res;
+}
+
+
+template<class T>
+void sys_map<T>::prune(sys_map<int>& topo_mask){
+	//topo_mask.print();
+	for(auto& vm_id: vm_list())
+		for(auto& vnode_id: vnode_list(vm_id)){
+			if(topo_mask.vm_view(vm_id, vnode_id).data == 0)
+				del_entry_vm_view(vm_id, vnode_id); /////////
+		}
 }
 
 template<class T>
