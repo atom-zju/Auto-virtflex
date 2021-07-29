@@ -192,15 +192,15 @@ void topo_change_engine::config(){
 
 void topo_change_engine::calculate_topo_changeness(){
 	// testing sys_map class	
-	sys_map<int> topo_map(TOPO_SYS_MAP);
-	topo_map.update(topod);
-	topo_map.print();
-	sys_map<float> vcpu_usage_map(VCPU_USAGE_SYS_MAP);
-	vcpu_usage_map.update(topod, (time(NULL)-1)*1000);
-	vcpu_usage_map.print();
-	sys_map<int> bw_usage_map(BW_USAGE_SYS_MAP);
-	bw_usage_map.update(topod, (time(NULL)-5)*1000);
-	bw_usage_map.print();
+	//sys_map<int> topo_map(TOPO_SYS_MAP);
+	//topo_map.update(topod);
+	//topo_map.print();
+	//sys_map<float> vcpu_usage_map(VCPU_USAGE_SYS_MAP);
+	//vcpu_usage_map.update(topod, (time(NULL)-1)*1000);
+	//vcpu_usage_map.print();
+	//sys_map<int> bw_usage_map(BW_USAGE_SYS_MAP);
+	//bw_usage_map.update(topod, (time(NULL)-5)*1000);
+	//bw_usage_map.print();
 	//float r = vcpu_usage_map.vm_view(1, 3).data;
 	//cout << "vm_view(1, 3): " << (vcpu_usage_map.vm_view(1, 3).is_empty()? -2333.0: r) << endl;
 
@@ -248,15 +248,18 @@ int topo_change_engine::generate_new_topo_map(unordered_map<string, sys_map_base
 	new_sys = old_sys;
 	sys_map<int>& bw_sys = *(sys_map<int>*)sys_map_tbl[BW_USAGE_SYS_MAP];
         sys_map<float>& cpu_sys = *(sys_map<float>*)sys_map_tbl[VCPU_USAGE_SYS_MAP];
+	old_sys.print();
         bw_sys.print();
         cpu_sys.print();
         // saturation check
         //for(tt){
         //}
         bw_sys.prune(old_sys);
+        bw_sys.print();
         //bw_sys.same_dimension_zero_fill(old_sys);
 
-        for(auto& vm_id: bw_sys.vm_list())
+        for(auto& vm_id: bw_sys.vm_list()){
+		cout << "vm " << vm_id << " avg_bw: " << bw_sys.vm_avg(vm_id) << endl;
                 if( bw_sys.vm_avg(vm_id) > 700 ){ ///// able to easily do aggregate operations
                         int vnode = old_sys.min_vnode_in_vm(vm_id);
                         cout << "Expanding node : " << vnode << " for vm: " << vm_id << endl;
@@ -274,6 +277,7 @@ int topo_change_engine::generate_new_topo_map(unordered_map<string, sys_map_base
                         new_sys.vm_view(vm_id, vnode).data = 0;
                         old_sys.vm_view(vm_id, 0).data = 1;
                 }
+	}
 	return 0;
 }
 

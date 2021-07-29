@@ -173,6 +173,10 @@ void sys_map<T>::del_entry_vm_view(int vm_id, int vnode_id){
 	pnode_map[r.pnode_id].erase(r.vm_id);
 	if(pnode_map[r.pnode_id].size() == 0)
 		pnode_map.erase(r.pnode_id);
+	for(int i=idx; i < records.size(); i++){
+		vm_map[records[i].vm_id][records[i].vnode_id] = i;
+		pnode_map[records[i].pnode_id][records[i].vm_id] = i;
+	}
 }
 
 template<class T>
@@ -198,7 +202,7 @@ T sys_map<T>::vm_avg(int vm_id, sys_map<int>* mask){
 	int cnt = 0;
 	assert(vm_map.find(vm_id) != vm_map.end());
 	for(auto& vnode_id: vnode_list(vm_id)){
-		if(mask && mask->vm_view(vm_id, vnode_id).data != 0) {
+		if(!mask || mask->vm_view(vm_id, vnode_id).data != 0) {
 			res += vm_view(vm_id, vnode_id).data;
 			cnt++;	
 		}
@@ -210,7 +214,7 @@ T sys_map<T>::vm_sum(int vm_id, sys_map<int>* mask){
 	T res = 0;
 	assert(vm_map.find(vm_id) != vm_map.end());
 	for(auto& vnode_id: vnode_list(vm_id)){
-		if(mask && mask->vm_view(vm_id, vnode_id).data != 0) {
+		if(!mask || mask->vm_view(vm_id, vnode_id).data != 0) {
 			res += vm_view(vm_id, vnode_id).data;
 		}
 	}
@@ -221,7 +225,7 @@ T sys_map<T>::pnode_sum(int pnode_id, sys_map<int>* mask){
         T res = 0;
         assert(pnode_map.find(pnode_id) != pnode_map.end());
         for(auto& vm_id: vm_list_within_pnode(pnode_id)){
-		if(mask && mask->pnode_view(pnode_id, vm_id).data != 0) {
+		if(!mask || mask->pnode_view(pnode_id, vm_id).data != 0) {
                 	res += pnode_view(pnode_id, vm_id).data;
 		}
         }
