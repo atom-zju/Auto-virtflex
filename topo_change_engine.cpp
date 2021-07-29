@@ -247,12 +247,33 @@ int topo_change_engine::generate_new_topo_map(unordered_map<string, sys_map_base
 	sys_map<int>& old_sys = *(sys_map<int>*)sys_map_tbl[TOPO_SYS_MAP]; 
 	new_sys = old_sys;
 	sys_map<int>& bw_sys = *(sys_map<int>*)sys_map_tbl[BW_USAGE_SYS_MAP];
-	
-	//for(auto& vm_id: old_sys.vm_list())
-	//	if( bw_sys.vm_view(vm_id) > 700 ) ///// able to easily do aggregate operations
-	//		new_sys.vm_view() = 1; //////	able to change value easily,
-	//	else if(bw_sys.vm_view(vm_id) < 150) //// able to return min/max idx given 1d idx
-	//		new_sys.vm_view() = 0;//////
+        sys_map<float>& cpu_sys = *(sys_map<float>*)sys_map_tbl[VCPU_USAGE_SYS_MAP];
+        bw_sys.print();
+        cpu_sys.print();
+        // saturation check
+        //for(tt){
+        //}
+        bw_sys.prune(old_sys);
+        //bw_sys.same_dimension_zero_fill(old_sys);
+
+        for(auto& vm_id: bw_sys.vm_list())
+                if( bw_sys.vm_avg(vm_id) > 700 ){ ///// able to easily do aggregate operations
+                        int vnode = old_sys.min_vnode_in_vm(vm_id);
+                        cout << "Expanding node : " << vnode << " for vm: " << vm_id << endl;
+                        //old_sys.print();
+                        new_sys.vm_view(vm_id, vnode).data = 1; //////  able to change value easily,
+                }
+                else if(bw_sys.vm_avg(vm_id) < 150){ //// able to return min/max idx given 1d idx
+                        // a trick to preserve node 0
+                        if(old_sys.vm_sum(vm_id) <=  1)
+                                continue;
+                        old_sys.vm_view(vm_id, 0).data = 0;
+                        bw_sys.prune(old_sys);
+                        int vnode = bw_sys.min_vnode_in_vm(vm_id);
+                        cout << "Shrinking node : " << vnode << " for vm: " << vm_id << endl;
+                        new_sys.vm_view(vm_id, vnode).data = 0;
+                        old_sys.vm_view(vm_id, 0).data = 1;
+                }
 	return 0;
 }
 
