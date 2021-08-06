@@ -20,8 +20,8 @@ public:
 
 	void update_node(unsigned int ts);
 	
-	int shrink();
-	int expand();
+	int shrink(int reserved_vnode_id);
+	int expand(int reserved_vnode_id);
 	
 	long average_bw_usage();
 	long long get_recent_vcpu_usage();

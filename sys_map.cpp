@@ -34,7 +34,12 @@ int vcpu_usage_sys_map_update(topo_change_d* topod, void* map, long long since_u
 			//cout << "valid vcpu queue found" << endl;
 			int pnode_id = topod->vnode_to_pnode(vm_id, vnode_id);
 			assert(pnode_id >= 0);
-			float data = sample_queue<float>::calculate_avg(
+			float data;
+			if(since_ux_ts_ms < 0)
+				data = sample_queue<float>::last_record_avg(
+						data_map[vm_id][vnode_id][CPU_USAGE_SQ]);
+			else
+				data = sample_queue<float>::calculate_avg(
 					data_map[vm_id][vnode_id][CPU_USAGE_SQ], since_ux_ts_ms);
 			//cout << "data: " << data << endl;
 			smap->push_back(map_record<float>(vm_id, vnode_id, pnode_id, data));
@@ -59,7 +64,12 @@ int bw_usage_sys_map_update(topo_change_d* topod, void* map, long long since_ux_
 			assert(pnode_id >= 0);
 			//cout << "sq vector.size: " << data_map[vm_id][vnode_id][BW_USAGE_SQ].size() << endl;
 			//data_map[vm_id][vnode_id][BW_USAGE_SQ][0]->print();
-			int data = sample_queue<int>::calculate_avg(
+			int data;
+			if(since_ux_ts_ms < 0)
+				data = sample_queue<int>::last_record_avg(
+                                        data_map[vm_id][vnode_id][BW_USAGE_SQ]);
+			else
+				data = sample_queue<int>::calculate_avg(
 					data_map[vm_id][vnode_id][BW_USAGE_SQ], since_ux_ts_ms);
 			cout << "data: " << data << endl;
 			smap->push_back(map_record<int>(vm_id, vnode_id, pnode_id, data));

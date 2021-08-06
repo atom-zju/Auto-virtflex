@@ -7,7 +7,8 @@
 
 using namespace std;
 
-vm::vm(int id, topo_change_d* d,string s): xs_path(s), topod(d), vm_id(id), vcpu_path(s+"/cpu"){
+vm::vm(int id, topo_change_d* d,string s): 
+		xs_path(s), topod(d), vm_id(id), vcpu_path(s+"/cpu"), reserved_vnode_id(0){
 	start_time_sec_unix = libxl_vm_get_start_time(topod->xl_handle, vm_id);
 	logger = new vm_logger("log/vm_"+to_string(vm_id)+"_log.txt", this);
 	assert(logger);
@@ -92,7 +93,7 @@ int vm::shrink_vnode(int id){
 		cout<< UNIX_TS<< "Didn't find vnode " << id << " in vm::shrink_vnode" <<endl;
 		return -1;
 	}
-	return v->shrink();
+	return v->shrink(reserved_vnode_id);
 }
 int vm::expand_vnode(int id){
 	vnode* v = get_vnode_by_id(id);
@@ -100,7 +101,7 @@ int vm::expand_vnode(int id){
                 cout<< UNIX_TS<< "Didn't find vnode " << id << " in vm::expand_vnode" <<endl;
 		return -1;
 	}
-        return v->expand();
+        return v->expand(reserved_vnode_id);
 }
 
 long vm::average_bw_usage(){

@@ -236,13 +236,38 @@ void topo_change_engine::generate_sys_map_table(){
         //        sys_map_table[TOPO_SYS_MAP] = new sys_map<int>(TOPO_SYS_MAP);
 }
 
+static void print_last_record(unordered_map<string, sys_map_base*>& sys_map_tbl, topo_change_d* topod){
+	if(!file_output || sys_map_tbl.find(TOPO_SYS_MAP) == sys_map_tbl.end() ||
+           		sys_map_tbl.find(BW_USAGE_SYS_MAP) == sys_map_tbl.end() ||
+			sys_map_tbl.find(VCPU_USAGE_SYS_MAP) == sys_map_tbl.end())
+                return;
+	sys_map<int> topo_sys = *(sys_map<int>*)sys_map_tbl[TOPO_SYS_MAP];
+	sys_map<int> bw_sys = *(sys_map<int>*)sys_map_tbl[BW_USAGE_SYS_MAP];
+	sys_map<float> cpu_sys = *(sys_map<float>*)sys_map_tbl[VCPU_USAGE_SYS_MAP];
+
+	topo_sys.update(topod, -1);
+	bw_sys.update(topod, -1);
+	cpu_sys.update(topod, -1);
+
+	bw_sys.prune(topo_sys);
+	cpu_sys.prune(topo_sys);
+	
+	for(auto& vm_id: bw_sys.vm_list()){
+		of << UNIX_TS << "vm: " << vm_id << ", avg_bw_load: " << bw_sys.vm_avg(vm_id) << endl;	
+	}
+	for(auto& vm_id: cpu_sys.vm_list()){
+		of << UNIX_TS <<  "vm: " << vm_id << ", avg_cpu_load: "<<cpu_sys.vm_avg(vm_id) << endl;
+	}	
+
+}
+
 int topo_change_engine::generate_new_topo_map(unordered_map<string, sys_map_base*>& sys_map_tbl, sys_map<int>& new_sys){
 	if(sys_map_tbl.find(TOPO_SYS_MAP) == sys_map_tbl.end() ||
-           sys_map_tbl.find(BW_USAGE_SYS_MAP) == sys_map_tbl.end())
+           		sys_map_tbl.find(BW_USAGE_SYS_MAP) == sys_map_tbl.end())
 		return -1;
 	for(auto& x: sys_map_tbl){
-		// get data for the most recent 5 sec
-		x.second->update(topod, (time(NULL)-5)*1000);
+		// get data for the last 10 sec
+		x.second->update(topod, (time(NULL)-10)*1000);
 	}
 	sys_map<int>& old_sys = *(sys_map<int>*)sys_map_tbl[TOPO_SYS_MAP]; 
 	new_sys = old_sys;
@@ -302,6 +327,7 @@ int topo_change_engine::generate_topo_change_events(sys_map<int>& new_sys, sys_m
 
 int topo_change_engine::generate_events(deque<topo_change_event>& e){
 	generate_sys_map_table();
+	print_last_record(sys_map_table, topod);
 	sys_map<int> old_sys, new_sys;
 	if(generate_new_topo_map(sys_map_table, new_sys)< 0)
 		return -1;

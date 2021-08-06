@@ -68,15 +68,18 @@ void vnode::update_node(unsigned int ts){
 	
 }
 
-int vnode::shrink(){
+int vnode::shrink(int reserved_vnode_id){
 	// 1. set the topo_change flag to be 2, path: /numa/topo_change
-	// 2. change target to low_target 
-	// 3. disable all vcpus
+	// 2. write the reserved vnode id to /numa/reserved_node
+	// 3. change target to low_target 
+	// 4. disable all vcpus
 	enabled = false;
 	change_pnode_owner_xs(false);
 	string topo_change_flag(xs_path.substr(0, xs_path.find_last_of("/\\")));
 	topo_change_flag = topo_change_flag.substr(0, topo_change_flag.find_last_of("/\\"));
+	string reserved_vnode_path = topo_change_flag;
 	topo_change_flag.append("/topo_change");
+	reserved_vnode_path.append("/reserved_node");
 	//cout << "topo_change_flag path: " << topo_change_flag << endl;
 	
 	assert(topod);
@@ -84,13 +87,14 @@ int vnode::shrink(){
 		if(x.first != 0)
 			x.second.disable();
 	}
-	write_to_xenstore_path(topod->xs, topo_change_flag,string("2"));
 	write_to_xenstore_path(topod->xs, string(xs_path).append("/target"),to_string(low_target));
+	write_to_xenstore_path(topod->xs, reserved_vnode_path, to_string(reserved_vnode_id));
+	write_to_xenstore_path(topod->xs, topo_change_flag,string("2"));
 	
 	return 0;	
 }
 
-int vnode::expand(){
+int vnode::expand(int reserved_vnode_id){
 	// 1. set the topo_change flag to be 1, path: /numa/topo_change
 	// 2. change target to capacity
 	// 3. enable all vcpus
@@ -101,10 +105,13 @@ int vnode::expand(){
 	enabled = true;
 	string topo_change_flag(xs_path.substr(0, xs_path.find_last_of("/\\")));
 	topo_change_flag = topo_change_flag.substr(0, topo_change_flag.find_last_of("/\\"));
+	string reserved_vnode_path = topo_change_flag;
 	topo_change_flag.append("/topo_change");
+	reserved_vnode_path.append("/reserved_node");
 	//cout << "topo_change_flag path: " << topo_change_flag << endl;
 	assert(topod);
 	write_to_xenstore_path(topod->xs, string(xs_path).append("/target"),to_string(capacity));
+	write_to_xenstore_path(topod->xs, reserved_vnode_path, to_string(reserved_vnode_id));
 	write_to_xenstore_path(topod->xs, topo_change_flag,string("1"));
 	return 0;
 }

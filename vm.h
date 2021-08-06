@@ -25,6 +25,7 @@ public:
 	vm_logger* logger;
 	sample_queue<int>* num_thread_sampleq;
 	int topo_changeness;
+	int reserved_vnode_id;
 
         vector<deque<pair<long long, int>>> num_thread_sample;
         int max_sample_size;

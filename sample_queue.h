@@ -54,6 +54,7 @@ public:
 	static unordered_map<int, unordered_map<int, unordered_map<string, vector<sample_queue<T> *>>>> data_map;
 	//static vector<sample_queue<T>*> get_sq_from_data_map(string vm, string node, string metric); ///////
 	static T calculate_avg(vector<sample_queue<T>*>& sqs, long long ux_ts_ms); ///////
+	static T last_record_avg(vector<sample_queue<T>*>& sqs);
 	static vector<int> vm_list();
 	static vector<int> vnode_list(int vm);
 	
@@ -67,6 +68,7 @@ public:
 	int get_sample(long long vm_start_time_sec_unix = 0);
 	void clear_sample();
 	T average_value_since_ts(long long valid_ts);
+	pair<long long, T> last_record();
 	void merge_sample_queue(sample_queue* s);
 	pair<long long, T> get_nearst_data_point(long long ux_ts_ms);
 	void insert_sample(pair<long long, T> p );
@@ -140,6 +142,27 @@ T sample_queue<T>::calculate_avg(vector<sample_queue<T>*>& sqs, long long ux_ts_
 	if(cnt == 0 )
 		return -1;
 	return res/(T)cnt;
+}
+template<class T>
+T sample_queue<T>::last_record_avg(vector<sample_queue<T>*>& sqs){
+	T res = 0;
+	int cnt = 0;
+	for(auto& sq: sqs){
+                auto tmp = sq->last_record();
+                if(tmp.first >= 0 && tmp.second > 0){
+                        res += tmp.second;
+                        cnt++;
+                }
+        }
+        if(cnt == 0 )
+                return -1;
+        return res/(T)cnt;	
+}
+template<class T>
+pair<long long, T> sample_queue<T>::last_record(){
+	if(sample.empty())
+		return make_pair(-1, -1);
+	return sample[sample.size()-1];
 }
 
 template<class T>
