@@ -28,6 +28,17 @@ int topo_change_d::vnode_to_pnode(int vm_id, int vnode_id){
 		return -2;
 	return vm_map[vm_id]->vnode_map[vnode_id]->pnode_id;
 }
+int topo_change_d::reserved_vnode_id(int vm_id){
+	if(vm_map.find(vm_id) == vm_map.end())
+		return -1;
+	return vm_map[vm_id]->reserved_vnode_id;
+}
+int topo_change_d::set_reserved_vnode_id(int vm_id, int vnode_id){
+	if(vm_map.find(vm_id) == vm_map.end())
+		return -1;
+	vm_map[vm_id]->reserved_vnode_id = vnode_id;
+	return 0;
+}
 
 topo_change_d::topo_change_d(){
 	ts = 0;

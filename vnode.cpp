@@ -73,6 +73,10 @@ int vnode::shrink(int reserved_vnode_id){
 	// 2. write the reserved vnode id to /numa/reserved_node
 	// 3. change target to low_target 
 	// 4. disable all vcpus
+	
+	// check reserved_vnode_id
+	if(reserved_vnode_id == vnode_id)
+		return -1;
 	enabled = false;
 	change_pnode_owner_xs(false);
 	string topo_change_flag(xs_path.substr(0, xs_path.find_last_of("/\\")));

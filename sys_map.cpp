@@ -21,6 +21,24 @@ int topology_sys_map_update(topo_change_d* topod, void* map, long long since_ux_
 	return 0;	
 }
 
+int home_node_sys_map_update(topo_change_d* topod, void* map, long long since_ux_ts_ms){
+	auto smap = (sys_map<int>*)map;
+	for(auto& vm: topod->vm_map){
+                if(vm.first == 0)
+                        continue;
+		int home_node = vm.second->reserved_vnode_id;
+                for(auto& vnode: vm.second->vnode_map){
+                        int data = (vnode.second->vnode_id == home_node)? 1: 0;
+                        int vm_id = vm.first;
+                        int vnode_id = vnode.first;
+                        int pnode_id = vnode.second->pnode_id;
+                        map_record<int> m = map_record<int>(vm_id, vnode_id, pnode_id, data);
+                        smap->push_back(m);
+                }
+        }
+        return 0;
+}
+
 int vcpu_usage_sys_map_update(topo_change_d* topod, void* map, long long since_ux_ts_ms){
 
 	//cout << "update vcpu usage sys map" << endl;
@@ -81,5 +99,6 @@ int bw_usage_sys_map_update(topo_change_d* topod, void* map, long long since_ux_
 unordered_map<string, int (*)(topo_change_d*, void*, long long)> sys_map_func_map{
 	{TOPO_SYS_MAP, topology_sys_map_update},
 	{VCPU_USAGE_SYS_MAP, vcpu_usage_sys_map_update},
-	{BW_USAGE_SYS_MAP, bw_usage_sys_map_update}
+	{BW_USAGE_SYS_MAP, bw_usage_sys_map_update}, 
+	{HOME_NODE_SYS_MAP, home_node_sys_map_update}
 };

@@ -232,6 +232,8 @@ void topo_change_engine::generate_sys_map_table(){
                 sys_map_table[VCPU_USAGE_SYS_MAP] = new sys_map<float>(VCPU_USAGE_SYS_MAP);
         if(sys_map_table.find(BW_USAGE_SYS_MAP) == sys_map_table.end())
                 sys_map_table[BW_USAGE_SYS_MAP] = new sys_map<int>(BW_USAGE_SYS_MAP);
+        if(sys_map_table.find(HOME_NODE_SYS_MAP) == sys_map_table.end())
+                sys_map_table[HOME_NODE_SYS_MAP] = new sys_map<int>(HOME_NODE_SYS_MAP);
         //if(sys_map_table.find(TOPO_SYS_MAP) == sys_map_table.end())
         //        sys_map_table[TOPO_SYS_MAP] = new sys_map<int>(TOPO_SYS_MAP);
 }
@@ -295,7 +297,9 @@ int topo_change_engine::generate_new_topo_map(unordered_map<string, sys_map_base
                         // a trick to preserve node 0
                         if(old_sys.vm_sum(vm_id) <=  1)
                                 continue;
-                        old_sys.vm_view(vm_id, 0).data = 0;
+			int reserved_vnode_id = topod->reserved_vnode_id(vm_id);
+			reserved_vnode_id = max(reserved_vnode_id, 0);
+                        old_sys.vm_view(vm_id, reserved_vnode_id).data = 0;
                         bw_sys.prune(old_sys);
                         int vnode = bw_sys.min_vnode_in_vm(vm_id);
                         cout << "Shrinking node : " << vnode << " for vm: " << vm_id << endl;

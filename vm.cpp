@@ -8,7 +8,7 @@
 using namespace std;
 
 vm::vm(int id, topo_change_d* d,string s): 
-		xs_path(s), topod(d), vm_id(id), vcpu_path(s+"/cpu"), reserved_vnode_id(0){
+		xs_path(s), topod(d), vm_id(id), vcpu_path(s+"/cpu"), reserved_vnode_id(1){
 	start_time_sec_unix = libxl_vm_get_start_time(topod->xl_handle, vm_id);
 	logger = new vm_logger("log/vm_"+to_string(vm_id)+"_log.txt", this);
 	assert(logger);
