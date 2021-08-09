@@ -313,12 +313,11 @@ static bool home_node_assignment_helper(sys_map<int>& topo_sys,
 				if (skip)
 					continue;
 			}
-			map_record<int> m(vm_id, vnode_id, pnode_id, 1);
-			home_node_sys.push_back(m);
+			home_node_sys.vm_view(vm_id, vnode_id).data = 1;
 			if(home_node_assignment_helper(topo_sys, vm_list, idx+1, home_node_sys))
 				return true;
 			else
-				home_node_sys.del_entry_vm_view(vm_id, vnode_id);
+				home_node_sys.vm_view(vm_id, vnode_id).data = 0;
 		}
 	return false;
 }
@@ -329,10 +328,12 @@ static bool home_node_assignment(topo_change_d* topod, sys_map<int> topo_sys, sy
 		return false;
 	//sys_map<int> old_home_node_sys = home_node_sys;
 	home_node_sys.clear();
+	home_node_sys.same_dimension_zero_fill(topo_sys);
 	if(!home_node_assignment_helper(topo_sys, topo_sys.vm_list(), 0, home_node_sys))
 		return false;
 	for(auto& vm_id: home_node_sys.vm_list()){
 		int vnode_id = home_node_sys.max_vnode_in_vm(vm_id);
+		assert(home_node_sys.vm_view(vm_id, vnode_id).data == 1);
 		topod->set_reserved_vnode_id(vm_id, vnode_id);
 	}
 	return true;
@@ -356,22 +357,23 @@ int topo_change_engine::generate_new_topo_map(unordered_map<string, sys_map_base
         cpu_sys.print();
 	home_node_assignment(topod, old_sys, home_node_sys);
 	home_node_sys.update(topod);
-        // saturation check
-        //for(tt){
-        //}
         bw_sys.prune(old_sys);
         bw_sys.print();
         //bw_sys.same_dimension_zero_fill(old_sys);
-
+	
+	// enable/disable node according to bw
         for(auto& vm_id: bw_sys.vm_list()){
 		cout << "vm " << vm_id << " avg_bw: " << bw_sys.vm_avg(vm_id) << endl;
-                if( bw_sys.vm_avg(vm_id) > 700 ){ ///// able to easily do aggregate operations
-                        int vnode = old_sys.min_vnode_in_vm(vm_id);
+                if( bw_sys.vm_avg(vm_id) > 700 ){
+                        //int vnode = old_sys.min_vnode_in_vm(vm_id);
+			int pnode = new_sys.min_pnode();
+			int vnode = old_sys.pnode_view(pnode, vm_id).vnode_id;
                         cout << "Expanding node : " << vnode << " for vm: " << vm_id << endl;
                         //old_sys.print();
-                        new_sys.vm_view(vm_id, vnode).data = 1; //////  able to change value easily,
+                        new_sys.vm_view(vm_id, vnode).data = 1;
+			
                 }
-                else if(bw_sys.vm_avg(vm_id) < 150){ //// able to return min/max idx given 1d idx
+                else if(bw_sys.vm_avg(vm_id) < 150){
                         // a trick to preserve node 0
                         if(old_sys.vm_sum(vm_id) <=  1)
                                 continue;
@@ -385,6 +387,32 @@ int topo_change_engine::generate_new_topo_map(unordered_map<string, sys_map_base
                         old_sys.vm_view(vm_id, 0).data = 1;
                 }
 	}
+	// disable sharing
+	// criteria: 1. home node 2. min # of enabled node
+	for(auto& pnode_id: new_sys.pnode_list()){
+		if(new_sys.pnode_sum(pnode_id)> 1){
+			if(home_node_sys.pnode_sum(pnode_id) >= 1){
+				for(auto& vm_id: new_sys.vm_list_within_pnode(pnode_id))
+					if(new_sys.pnode_view(pnode_id, vm_id).data == 1
+							&& home_node_sys.pnode_view(pnode_id, vm_id).data == 0)
+						new_sys.pnode_view(pnode_id, vm_id).data = 0;
+			}
+			else{
+				auto vm_list = new_sys.vm_list_within_pnode(pnode_id);
+				new_sys.sort_vm_by_sum(vm_list);
+				bool assigned = false;
+				for(auto& vm_id: vm_list){
+					if(new_sys.pnode_view(pnode_id, vm_id).data == 1){
+						if(!assigned)
+							assigned = !assigned;
+						else
+							new_sys.pnode_view(pnode_id, vm_id).data = 0;
+					}
+				}
+			}
+		}
+	}
+
 	return 0;
 }
 

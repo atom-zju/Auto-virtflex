@@ -5,6 +5,7 @@
 #include <time.h>
 #include <string>
 #include <vector>
+#include <queue>
 #include <cassert>
 
 class topo_change_d;
@@ -72,19 +73,22 @@ class sys_map: public sys_map_base {
 	void same_dimension_zero_fill(sys_map<int>& topo_mask);
 	bool record_exist_vm_view(int vm_id, int vnode_id);
 	bool record_exist_pnode_view(int pnode_id, int vm_id);
-	void normalize(); /////////
-	void mul(T scalar); ////////
-	void mul(sys_map_base*); /////////
-	void add(T scalar); ////////
-	void add(sys_map_base* ); /////////
+	void normalize();
+	void mul(T scalar);
+	void mul(sys_map_base*);
+	void add(T scalar);
+	void add(sys_map_base* );
 	void negate();
-	T vm_avg(int vm_id, sys_map<int>* mask = NULL);///////
-	T vm_sum(int vm_id, sys_map<int>* mask = NULL);///////
-	T pnode_sum(int pnode_id, sys_map<int>* mask = NULL);////////
-	int min_vnode_in_vm(int vm_id, sys_map<int>* mask = NULL);///////
-	int min_vm_in_pnode(int pnode_id, sys_map<int>* mask = NULL);///////
-	int max_vnode_in_vm(int vm_id, sys_map<int>* mask = NULL);////////
-	int max_vm_in_pnode(int pnode_id, sys_map<int>* mask = NULL);//////////
+	T vm_avg(int vm_id, sys_map<int>* mask = NULL);
+	T vm_sum(int vm_id, sys_map<int>* mask = NULL);
+	void sort_vm_by_sum(vector<int>& vm_list, sys_map<int>* mask = NULL);
+	T pnode_sum(int pnode_id, sys_map<int>* mask = NULL);
+	int max_pnode(sys_map<int>* mask = NULL);//////
+	int min_pnode(sys_map<int>* mask = NULL);//////
+	int min_vnode_in_vm(int vm_id, sys_map<int>* mask = NULL);
+	int min_vm_in_pnode(int pnode_id, sys_map<int>* mask = NULL);
+	int max_vnode_in_vm(int vm_id, sys_map<int>* mask = NULL);
+	int max_vm_in_pnode(int pnode_id, sys_map<int>* mask = NULL);
 	int update(topo_change_d* topod, long long since_ux_ts_ms=0);
 };
 
@@ -239,6 +243,60 @@ T sys_map<T>::pnode_sum(int pnode_id, sys_map<int>* mask){
 		}
         }
         return res;
+}
+
+template<class T>
+int sys_map<T>::max_pnode(sys_map<int>* mask){
+        T max_res;
+        int max_idx = -1;
+        bool first = true;
+        for(auto& pnode_id: pnode_list()){
+		T sum = pnode_sum(pnode_id, mask);
+                if(first){
+                        first = !first;
+                        max_res = sum;
+                        max_idx = pnode_id;
+                }
+                else if(sum > max_res){
+                        max_res = sum;
+                        max_idx = pnode_id;
+                }
+        }
+        return max_idx;
+}
+
+template<class T>
+int sys_map<T>::min_pnode(sys_map<int>* mask){
+        T min_res;
+        int min_idx = -1;
+        bool first = true;
+        for(auto& pnode_id: pnode_list()){
+		T sum = pnode_sum(pnode_id, mask);
+                if(first){
+                        first = !first;
+                        min_res = sum;
+                        min_idx = pnode_id;
+                }
+                else if(sum < min_res){
+                        min_res = sum;
+                        min_idx = pnode_id;
+                }
+        }
+        return min_idx;
+}
+
+template<class T>
+void sys_map<T>::sort_vm_by_sum(vector<int>& vm_list, sys_map<int>* mask){
+	priority_queue<pair<T, int>> pq;
+	for(auto& vm_id: vm_list){
+		pq.push(make_pair(-vm_sum(vm_id, mask), vm_id));
+	}
+	vm_list.clear();
+	while(!pq.empty()){
+		auto p = pq.top();
+		pq.pop();
+		vm_list.push_back(p.second);
+	}
 }
 
 template<class T>

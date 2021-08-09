@@ -8,7 +8,6 @@ void print_usage(){
 }
 
 int main(int argc, char** argv){
-	
 	if(argc >= 2){
 		of.open(argv[1]);
 		if(!of.is_open()){
@@ -18,11 +17,11 @@ int main(int argc, char** argv){
 		}
 		file_output = true;
 	}
-       topo_change_d topod;
-       topod.set_interval_ms(1000);
-       topod.start();
-       //topod.update_vm_map();
-       //topod.expand_vm(2, 3);
+       	topo_change_d topod;
+       	topod.set_interval_ms(1000);
+       	topod.start();
+       	//topod.update_vm_map();
+       	//topod.expand_vm(2, 3);
 	if(file_output){
 		of.close();
 	}
