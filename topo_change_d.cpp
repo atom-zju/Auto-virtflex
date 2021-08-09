@@ -39,7 +39,6 @@ int topo_change_d::set_reserved_vnode_id(int vm_id, int vnode_id){
 	vm_map[vm_id]->reserved_vnode_id = vnode_id;
 	return 0;
 }
-
 topo_change_d::topo_change_d(){
 	ts = 0;
 	xs =  xs_daemon_open();

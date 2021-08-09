@@ -262,6 +262,81 @@ static void print_last_record(unordered_map<string, sys_map_base*>& sys_map_tbl,
 	}	
 
 }
+/* checks whether home node sys (can be half-completed) is valid */
+static bool home_node_sys_is_valid(sys_map<int>& home_node_sys, sys_map<int>& topo_sys){
+	bool idle = false;
+	bool overlap = false;
+	for(auto& pnode_id: home_node_sys.pnode_list()){
+		int pnode_sum = home_node_sys.pnode_sum(pnode_id);
+		if(pnode_sum == 0)
+			idle = true;
+		else if(pnode_sum > 1)
+			overlap = true;
+		if(idle && overlap)
+			return false;
+	}
+	// checks more than one home node per vm
+	for(auto& vm_id: home_node_sys.vm_list())
+		if(home_node_sys.vm_sum(vm_id) > 1)
+			return false;
+	// checks home node are enabled node
+	for(auto& vm_id: home_node_sys.vm_list())
+		for(auto& vnode_id: home_node_sys.vnode_list(vm_id))
+			if(home_node_sys.vm_view(vm_id, vnode_id).data == 1 
+					&& topo_sys.vm_view(vm_id, vnode_id).data != 1)
+				return false;
+	return true;
+}
+/* check whether every vm is assigned to a home node */
+static int home_node_sys_is_complete(sys_map<int>& home_node_sys, sys_map<int>& topo_sys){
+	for(auto& vm_id: topo_sys.vm_list())
+		if(home_node_sys.vm_sum(vm_id) < 1)
+			return false;
+	return true;
+}
+
+static bool home_node_assignment_helper(sys_map<int>& topo_sys, 
+		const vector<int>& vm_list, int idx, sys_map<int>& home_node_sys){
+	if(idx >= vm_list.size())
+		return true;
+	int vm_id = vm_list[idx];
+	for(auto& vnode_id: topo_sys.vnode_list(vm_id))
+		if(topo_sys.vm_view(vm_id, vnode_id).data == 1){
+			int pnode_id = topo_sys.vm_view(vm_id, vnode_id).pnode_id;
+			if(home_node_sys.pnode_sum(pnode_id) > 0){
+				bool skip = false;
+				for(auto& pnode_id: home_node_sys.pnode_list())
+					if(home_node_sys.pnode_sum(pnode_id) == 0){
+						skip = true;
+						break;
+					}
+				if (skip)
+					continue;
+			}
+			map_record<int> m(vm_id, vnode_id, pnode_id, 1);
+			home_node_sys.push_back(m);
+			if(home_node_assignment_helper(topo_sys, vm_list, idx+1, home_node_sys))
+				return true;
+			else
+				home_node_sys.del_entry_vm_view(vm_id, vnode_id);
+		}
+	return false;
+}
+
+static bool home_node_assignment(topo_change_d* topod, sys_map<int> topo_sys, sys_map<int> home_node_sys){
+	if(home_node_sys_is_valid(home_node_sys, topo_sys) 
+			&& home_node_sys_is_complete(home_node_sys, topo_sys))
+		return false;
+	//sys_map<int> old_home_node_sys = home_node_sys;
+	home_node_sys.clear();
+	if(!home_node_assignment_helper(topo_sys, topo_sys.vm_list(), 0, home_node_sys))
+		return false;
+	for(auto& vm_id: home_node_sys.vm_list()){
+		int vnode_id = home_node_sys.max_vnode_in_vm(vm_id);
+		topod->set_reserved_vnode_id(vm_id, vnode_id);
+	}
+	return true;
+}
 
 int topo_change_engine::generate_new_topo_map(unordered_map<string, sys_map_base*>& sys_map_tbl, sys_map<int>& new_sys){
 	if(sys_map_tbl.find(TOPO_SYS_MAP) == sys_map_tbl.end() ||
@@ -273,11 +348,14 @@ int topo_change_engine::generate_new_topo_map(unordered_map<string, sys_map_base
 	}
 	sys_map<int>& old_sys = *(sys_map<int>*)sys_map_tbl[TOPO_SYS_MAP]; 
 	new_sys = old_sys;
+	sys_map<int>& home_node_sys = *(sys_map<int>*)sys_map_tbl[HOME_NODE_SYS_MAP];
 	sys_map<int>& bw_sys = *(sys_map<int>*)sys_map_tbl[BW_USAGE_SYS_MAP];
         sys_map<float>& cpu_sys = *(sys_map<float>*)sys_map_tbl[VCPU_USAGE_SYS_MAP];
 	old_sys.print();
         bw_sys.print();
         cpu_sys.print();
+	home_node_assignment(topod, old_sys, home_node_sys);
+	home_node_sys.update(topod);
         // saturation check
         //for(tt){
         //}

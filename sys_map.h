@@ -63,6 +63,7 @@ class sys_map: public sys_map_base {
 	sys_map(): ux_ts_ms(0){}
 	void push_back(map_record<T> m);
 	void del_entry_vm_view(int vm_id, int vnode_id);
+	void clear();
 	void print();
 	string get_name();
 	map_record<T>& vm_view(int vm_id, int vnode_id);
@@ -181,6 +182,13 @@ void sys_map<T>::del_entry_vm_view(int vm_id, int vnode_id){
 }
 
 template<class T>
+void sys_map<T>::clear(){
+	vm_map.clear();
+	pnode_map.clear();
+	records.clear();
+}
+
+template<class T>
 void sys_map<T>::mul(T scalar){
 	for(auto& vm_id: vm_list())
 		for(auto& vnode_id: vnode_list(vm_id)){
@@ -255,10 +263,10 @@ int sys_map<T>::min_vnode_in_vm(int vm_id, sys_map<int>* mask){
 	return min_idx;
 }
 
-template<class T>
-int sys_map<T>::min_vm_in_pnode(int pnode_id, sys_map<int>* mask){
-	return -1;
-}
+//template<class T>
+//int sys_map<T>::min_vm_in_pnode(int pnode_id, sys_map<int>* mask){
+//	return -1;
+//}
 template<class T>
 int sys_map<T>::max_vnode_in_vm(int vm_id, sys_map<int>* mask){
 	T max_res;
@@ -280,10 +288,10 @@ int sys_map<T>::max_vnode_in_vm(int vm_id, sys_map<int>* mask){
 	}
 	return max_idx;
 }
-template<class T>
-int sys_map<T>::max_vm_in_pnode(int pnode_id, sys_map<int>* mask){
-	return -1;
-}
+//template<class T>
+//int sys_map<T>::max_vm_in_pnode(int pnode_id, sys_map<int>* mask){
+//	return -1;
+//}
 
 template<class T>
 vector<int> sys_map<T>::vm_list(){
@@ -343,7 +351,7 @@ template<class T>
 map_record<T>& sys_map<T>::pnode_view(int pnode_id, int vm_id){
 	assert(pnode_map.find(pnode_id) != pnode_map.end() && 
 			pnode_map[pnode_id].find(vm_id) != pnode_map[pnode_id].end());
-	return records[pnode_view[pnode_id][vm_id]];
+	return records[pnode_map[pnode_id][vm_id]];
 }
 
 template<class T>
@@ -353,9 +361,7 @@ int sys_map<T>::update(topo_change_d* topod, long long since_ux_ts_ms){
 		return -1;
 	}
 	//assert(typeid(T) == sys_map_func_map[name].second);
-	vm_map.clear();
-	pnode_map.clear();
-	records.clear();
+	clear();
 	ux_ts_ms = time(NULL)*1000;
 	return sys_map_func_map[name](topod, this, since_ux_ts_ms);
 }
