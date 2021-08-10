@@ -364,16 +364,28 @@ int topo_change_engine::generate_new_topo_map(unordered_map<string, sys_map_base
 	// enable/disable node according to bw
         for(auto& vm_id: bw_sys.vm_list()){
 		cout << "vm " << vm_id << " avg_bw: " << bw_sys.vm_avg(vm_id) << endl;
-                if( bw_sys.vm_avg(vm_id) > 700 ){
+                if( bw_sys.vm_avg(vm_id) > 600 ){
                         //int vnode = old_sys.min_vnode_in_vm(vm_id);
-			int pnode = new_sys.min_pnode();
+			auto pnode_list = new_sys.pnode_list();
+			new_sys.sort_pnode_by_sum(pnode_list);
+			// pick first pnode that doesn't have a home node, if doesn't exits then pick first one
+			int pnode = -1;
+			for (auto& pn: pnode_list){
+				if(home_node_sys.pnode_sum(pn) == 0){
+					pnode = pn;
+					break;
+				}
+			}
+			if (pnode == -1)
+				pnode = pnode_list[0];
+			//int pnode = new_sys.min_pnode();
 			int vnode = old_sys.pnode_view(pnode, vm_id).vnode_id;
                         cout << "Expanding node : " << vnode << " for vm: " << vm_id << endl;
                         //old_sys.print();
                         new_sys.vm_view(vm_id, vnode).data = 1;
 			
                 }
-                else if(bw_sys.vm_avg(vm_id) < 150){
+                else if(bw_sys.vm_avg(vm_id) < 200){
                         // a trick to preserve node 0
                         if(old_sys.vm_sum(vm_id) <=  1)
                                 continue;

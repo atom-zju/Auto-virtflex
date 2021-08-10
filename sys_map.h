@@ -83,8 +83,9 @@ class sys_map: public sys_map_base {
 	T vm_sum(int vm_id, sys_map<int>* mask = NULL);
 	void sort_vm_by_sum(vector<int>& vm_list, sys_map<int>* mask = NULL);
 	T pnode_sum(int pnode_id, sys_map<int>* mask = NULL);
-	int max_pnode(sys_map<int>* mask = NULL);//////
-	int min_pnode(sys_map<int>* mask = NULL);//////
+	void sort_pnode_by_sum(vector<int>& pnode_list, sys_map<int>* mask = NULL);
+	int max_sum_pnode(sys_map<int>* mask = NULL);//////
+	int min_sum_pnode(sys_map<int>* mask = NULL);//////
 	int min_vnode_in_vm(int vm_id, sys_map<int>* mask = NULL);
 	int min_vm_in_pnode(int pnode_id, sys_map<int>* mask = NULL);
 	int max_vnode_in_vm(int vm_id, sys_map<int>* mask = NULL);
@@ -225,33 +226,39 @@ T sys_map<T>::vm_avg(int vm_id, sys_map<int>* mask){
 template<class T>
 T sys_map<T>::vm_sum(int vm_id, sys_map<int>* mask){
 	T res = 0;
+	bool valid = false;
 	assert(vm_map.find(vm_id) != vm_map.end());
 	for(auto& vnode_id: vnode_list(vm_id)){
 		if(!mask || mask->vm_view(vm_id, vnode_id).data != 0) {
 			res += vm_view(vm_id, vnode_id).data;
+			valid = true;
 		}
 	}
-	return res;
+	return valid? res: -1;
 }
 template<class T>
 T sys_map<T>::pnode_sum(int pnode_id, sys_map<int>* mask){
         T res = 0;
+	bool valid = false;
         assert(pnode_map.find(pnode_id) != pnode_map.end());
         for(auto& vm_id: vm_list_within_pnode(pnode_id)){
 		if(!mask || mask->pnode_view(pnode_id, vm_id).data != 0) {
                 	res += pnode_view(pnode_id, vm_id).data;
+			valid = true;
 		}
         }
-        return res;
+        return valid? res: -1;
 }
 
 template<class T>
-int sys_map<T>::max_pnode(sys_map<int>* mask){
+int sys_map<T>::max_sum_pnode(sys_map<int>* mask){
         T max_res;
         int max_idx = -1;
         bool first = true;
         for(auto& pnode_id: pnode_list()){
 		T sum = pnode_sum(pnode_id, mask);
+		if(sum == -1)
+			continue;
                 if(first){
                         first = !first;
                         max_res = sum;
@@ -266,12 +273,14 @@ int sys_map<T>::max_pnode(sys_map<int>* mask){
 }
 
 template<class T>
-int sys_map<T>::min_pnode(sys_map<int>* mask){
+int sys_map<T>::min_sum_pnode(sys_map<int>* mask){
         T min_res;
         int min_idx = -1;
         bool first = true;
         for(auto& pnode_id: pnode_list()){
 		T sum = pnode_sum(pnode_id, mask);
+		if(sum == -1)
+			continue;
                 if(first){
                         first = !first;
                         min_res = sum;
@@ -289,6 +298,9 @@ template<class T>
 void sys_map<T>::sort_vm_by_sum(vector<int>& vm_list, sys_map<int>* mask){
 	priority_queue<pair<T, int>> pq;
 	for(auto& vm_id: vm_list){
+		auto sum = vm_sum(vm_id, mask);
+		if (sum == -1)
+			continue; 
 		pq.push(make_pair(-vm_sum(vm_id, mask), vm_id));
 	}
 	vm_list.clear();
@@ -296,6 +308,22 @@ void sys_map<T>::sort_vm_by_sum(vector<int>& vm_list, sys_map<int>* mask){
 		auto p = pq.top();
 		pq.pop();
 		vm_list.push_back(p.second);
+	}
+}
+template<class T>
+void sys_map<T>::sort_pnode_by_sum(vector<int>& pnode_list, sys_map<int>* mask){
+	priority_queue<pair<T, int>> pq;
+	for(auto& pnode_id: pnode_list){
+		auto sum = pnode_sum(pnode_id, mask);
+		if (sum == -1)
+			continue;
+		pq.push(make_pair(-sum, pnode_id));
+	}
+	pnode_list.clear();
+	while(!pq.empty()){
+		auto p = pq.top();
+		pq.pop();
+		pnode_list.push_back(p.second);
 	}
 }
 
