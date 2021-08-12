@@ -225,18 +225,6 @@ int topo_change_engine::get_sys_topo(sys_map<int>& old_sys){
 	return 0;
 }
 
-void topo_change_engine::generate_sys_map_table(){
-	if(sys_map_table.find(TOPO_SYS_MAP) == sys_map_table.end())
-		sys_map_table[TOPO_SYS_MAP] = new sys_map<int>(TOPO_SYS_MAP);
-	if(sys_map_table.find(VCPU_USAGE_SYS_MAP) == sys_map_table.end())
-                sys_map_table[VCPU_USAGE_SYS_MAP] = new sys_map<float>(VCPU_USAGE_SYS_MAP);
-        if(sys_map_table.find(BW_USAGE_SYS_MAP) == sys_map_table.end())
-                sys_map_table[BW_USAGE_SYS_MAP] = new sys_map<int>(BW_USAGE_SYS_MAP);
-        if(sys_map_table.find(HOME_NODE_SYS_MAP) == sys_map_table.end())
-                sys_map_table[HOME_NODE_SYS_MAP] = new sys_map<int>(HOME_NODE_SYS_MAP);
-        //if(sys_map_table.find(TOPO_SYS_MAP) == sys_map_table.end())
-        //        sys_map_table[TOPO_SYS_MAP] = new sys_map<int>(TOPO_SYS_MAP);
-}
 
 static void print_last_record(unordered_map<string, sys_map_base*>& sys_map_tbl, topo_change_d* topod){
 	if(!file_output || sys_map_tbl.find(TOPO_SYS_MAP) == sys_map_tbl.end() ||
@@ -339,6 +327,21 @@ static bool home_node_assignment(topo_change_d* topod, sys_map<int> topo_sys, sy
 	return true;
 }
 
+void topo_change_engine::generate_sys_map_table(){
+	if(sys_map_table.find(TOPO_SYS_MAP) == sys_map_table.end())
+		sys_map_table[TOPO_SYS_MAP] = new sys_map<int>(TOPO_SYS_MAP);
+	if(sys_map_table.find(VCPU_USAGE_SYS_MAP) == sys_map_table.end())
+                sys_map_table[VCPU_USAGE_SYS_MAP] = new sys_map<float>(VCPU_USAGE_SYS_MAP);
+        if(sys_map_table.find(BW_USAGE_SYS_MAP) == sys_map_table.end())
+                sys_map_table[BW_USAGE_SYS_MAP] = new sys_map<int>(BW_USAGE_SYS_MAP);
+        if(sys_map_table.find(HOME_NODE_SYS_MAP) == sys_map_table.end())
+                sys_map_table[HOME_NODE_SYS_MAP] = new sys_map<int>(HOME_NODE_SYS_MAP);
+        if(sys_map_table.find(NUM_THREAD_SYS_MAP) == sys_map_table.end())
+                sys_map_table[NUM_THREAD_SYS_MAP] = new sys_map<int>(NUM_THREAD_SYS_MAP);
+        //if(sys_map_table.find(TOPO_SYS_MAP) == sys_map_table.end())
+        //        sys_map_table[TOPO_SYS_MAP] = new sys_map<int>(TOPO_SYS_MAP);
+}
+
 int topo_change_engine::generate_new_topo_map(unordered_map<string, sys_map_base*>& sys_map_tbl, sys_map<int>& new_sys){
 	if(sys_map_tbl.find(TOPO_SYS_MAP) == sys_map_tbl.end() ||
            		sys_map_tbl.find(BW_USAGE_SYS_MAP) == sys_map_tbl.end())
@@ -352,9 +355,11 @@ int topo_change_engine::generate_new_topo_map(unordered_map<string, sys_map_base
 	sys_map<int>& home_node_sys = *(sys_map<int>*)sys_map_tbl[HOME_NODE_SYS_MAP];
 	sys_map<int>& bw_sys = *(sys_map<int>*)sys_map_tbl[BW_USAGE_SYS_MAP];
         sys_map<float>& cpu_sys = *(sys_map<float>*)sys_map_tbl[VCPU_USAGE_SYS_MAP];
+        sys_map<int>& num_thread_sys = *(sys_map<int>*)sys_map_tbl[NUM_THREAD_SYS_MAP];
 	old_sys.print();
         bw_sys.print();
         cpu_sys.print();
+	num_thread_sys.print();
 	home_node_assignment(topod, old_sys, home_node_sys);
 	home_node_sys.update(topod);
         bw_sys.prune(old_sys);
@@ -362,9 +367,9 @@ int topo_change_engine::generate_new_topo_map(unordered_map<string, sys_map_base
         //bw_sys.same_dimension_zero_fill(old_sys);
 	
 	// test num_thread_sys_map
-	sys_map<int> num_thread_sys(NUM_THREAD_SYS_MAP);
-        num_thread_sys.update(topod ,(time(NULL)-10)*1000);
-	num_thread_sys.print();
+	//sys_map<int> num_thread_sys(NUM_THREAD_SYS_MAP);
+        //num_thread_sys.update(topod ,(time(NULL)-10)*1000);
+	//num_thread_sys.print();
 
 	// enable/disable node according to bw
         for(auto& vm_id: bw_sys.vm_list()){
