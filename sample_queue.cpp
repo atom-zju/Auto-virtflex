@@ -78,10 +78,6 @@ int get_sample_from_xs(void* op1, void* op2, long long vm_start_time_sec_unix){
 
 unordered_map<string, int (*)(void*, void*, long long)> get_sample_func_map = {
         { CPU_USAGE_SQ, get_cpu_usage_sample },
-	{ BW_USAGE_SQ, get_sample_from_xs}
-	//{ NUM_OF_THREAD_SQ, (int (*)(void*, void*))get_num_thread_sample }
+	{ BW_USAGE_SQ, get_sample_from_xs},
+	{ NUM_OF_THREAD_SQ, get_sample_from_xs}
 };
-
-//int get_num_thread_sample(sample_queue<int>* , ){
-
-//}

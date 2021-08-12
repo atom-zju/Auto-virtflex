@@ -84,6 +84,8 @@ void vm::update_vnode_map(unsigned int ts){
 	/*get sample data from num_thread dir*/
 	if (num_thread_sampleq->get_sample(start_time_sec_unix))
 		cerr<< "VM " << vm_id << " failed to get num_thread samples" << endl;
+	else
+		num_thread_sampleq->print(); 
 }
 
 

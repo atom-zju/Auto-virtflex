@@ -361,6 +361,11 @@ int topo_change_engine::generate_new_topo_map(unordered_map<string, sys_map_base
         bw_sys.print();
         //bw_sys.same_dimension_zero_fill(old_sys);
 	
+	// test num_thread_sys_map
+	sys_map<int> num_thread_sys(NUM_THREAD_SYS_MAP);
+        num_thread_sys.update(topod ,(time(NULL)-10)*1000);
+	num_thread_sys.print();
+
 	// enable/disable node according to bw
         for(auto& vm_id: bw_sys.vm_list()){
 		cout << "vm " << vm_id << " avg_bw: " << bw_sys.vm_avg(vm_id) << endl;

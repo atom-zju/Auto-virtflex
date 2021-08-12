@@ -17,6 +17,7 @@
 #define TMP_NAME "temporary"
 #define SYS_VM_ID -1
 #define SYS_NODE_ID -1
+#define INVALID_SQ -3
 
 #define CPU_USAGE_SQ "cpu sample queue"
 #define NUM_OF_THREAD_SQ "num of threads sample queue"
@@ -57,6 +58,8 @@ public:
 	static T last_record_avg(vector<sample_queue<T>*>& sqs);
 	static vector<int> vm_list();
 	static vector<int> vnode_list(int vm);
+	static bool has_sys_vm();
+	static bool has_sys_node(int vm);
 	
 	sample_queue(string xs_dir, struct xs_handle *xs, dir md, string name = TMP_NAME,
 				int max_size = MAX_SAMPLE_SIZE, void* owner=NULL); 
@@ -103,7 +106,19 @@ sample_queue<T>::~sample_queue(){
 			break;
 		}
 }
-
+template<class T>
+bool sample_queue<T>::has_sys_vm(){
+	if(sample_queue<T>::data_map.find(SYS_VM_ID) == sample_queue<T>::data_map.end())
+		return false;
+	return true;
+}
+template<class T>
+bool sample_queue<T>::has_sys_node(int vm){
+	if(sample_queue<T>::data_map.find(vm) == sample_queue<T>::data_map.end() ||
+			sample_queue<T>::data_map[vm].find(SYS_NODE_ID) == sample_queue<T>::data_map[vm].end())
+		return false;
+	return true;
+}
 template<class T>
 vector<int> sample_queue<T>::vm_list(){
 	vector<int> res;

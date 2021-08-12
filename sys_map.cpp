@@ -74,7 +74,7 @@ int bw_usage_sys_map_update(topo_change_d* topod, void* map, long long since_ux_
 	auto& data_map = sample_queue<int>::data_map;
 	for(auto& vm_id: sample_queue<int>::vm_list())
 		for(auto& vnode_id: sample_queue<int>::vnode_list(vm_id)){
-			cout << "vm: " << vm_id << ", vnode: " << vnode_id<<endl;
+			//cout << "vm: " << vm_id << ", vnode: " << vnode_id<<endl;
 			if(data_map[vm_id][vnode_id].find(BW_USAGE_SQ) == data_map[vm_id][vnode_id].end())
 				continue;
 			//cout << "valid bw queue found" << endl;
@@ -89,10 +89,29 @@ int bw_usage_sys_map_update(topo_change_d* topod, void* map, long long since_ux_
 			else
 				data = sample_queue<int>::calculate_avg(
 					data_map[vm_id][vnode_id][BW_USAGE_SQ], since_ux_ts_ms);
-			cout << "data: " << data << endl;
+			//cout << "data: " << data << endl;
 			smap->push_back(map_record<int>(vm_id, vnode_id, pnode_id, data));
 			//cout << "dataaaaa: " << smap->records[smap->records.size()-1].data << endl;
 		}
+	return 0;
+}
+
+int num_thread_sys_map_update(topo_change_d* topod, void* map, long long since_ux_ts_ms){
+	auto smap = (sys_map<int>*)map;
+        auto& data_map = sample_queue<int>::data_map;
+	for(auto& vm_id: sample_queue<int>::vm_list()){
+		if(!sample_queue<int>::has_sys_node(vm_id) ||
+			data_map[vm_id][SYS_NODE_ID].find(NUM_OF_THREAD_SQ) == data_map[vm_id][SYS_NODE_ID].end())
+			continue;
+		int data;
+                if(since_ux_ts_ms < 0)
+                        data = sample_queue<int>::last_record_avg(
+                               data_map[vm_id][SYS_NODE_ID][NUM_OF_THREAD_SQ]);
+                else
+                        data = sample_queue<int>::calculate_avg(
+                               data_map[vm_id][SYS_NODE_ID][NUM_OF_THREAD_SQ], since_ux_ts_ms);
+		smap->push_back(map_record<int>(vm_id, SYS_NODE_ID, SYS_NODE_ID, data));
+	}
 	return 0;
 }
 
@@ -100,5 +119,6 @@ unordered_map<string, int (*)(topo_change_d*, void*, long long)> sys_map_func_ma
 	{TOPO_SYS_MAP, topology_sys_map_update},
 	{VCPU_USAGE_SYS_MAP, vcpu_usage_sys_map_update},
 	{BW_USAGE_SYS_MAP, bw_usage_sys_map_update}, 
-	{HOME_NODE_SYS_MAP, home_node_sys_map_update}
+	{HOME_NODE_SYS_MAP, home_node_sys_map_update},
+	{NUM_THREAD_SYS_MAP, num_thread_sys_map_update}
 };
