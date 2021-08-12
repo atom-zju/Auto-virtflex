@@ -1,15 +1,12 @@
 #include "sample_queue.h"
 #include "util.h"
+#include "cpu.h"
+#include "node.h"
 #include <sys/time.h>
 #include <unordered_map>
 #include <iostream>
 
 using namespace std;
-
-//template<>
-//unordered_map<string, unordered_map<string, unordered_map<string, vector<sample_queue<int>*>>>> sample_queue<int>::data_map;
-//template<>
-//unordered_map<string, unordered_map<string, unordered_map<string, vector<sample_queue<float>*>>>> sample_queue<float>::data_map;
 
 
 bool is_guest_vm(int vm){ return vm > 0; }
@@ -17,33 +14,74 @@ bool is_system_vm(int vm){ return vm == SYS_VM_ID;}
 bool is_guest_node(int node){ return node >= 0;}
 bool is_system_node(int node){ return node == SYS_NODE_ID; }
 
-template<>
-int sample_queue<int>::get_sample(long long vm_start_time_sec_unix){
-	if(!xs_dir.empty()){
-		assert(vm_start_time_sec_unix);
-		return get_sample_from_xs(vm_start_time_sec_unix);
+//template <class T>
+int get_cpu_usage_sample(void* op1, void* op2, long long vm_start_time_sec_unix){
+	assert(op1 && op2);
+	auto sq = (sample_queue<float>*)op1;
+	auto owner = (node*)op2;
+	if(!owner){
+		cerr<< "get_cpu_usage_sample using a NULL node pointer" << endl;
+		return -1;
 	}
-	else{
-		if(get_sample_func_map.find(this->name) == get_sample_func_map.end()){
-			cerr << "get_sample: cannot find get sample func in func map, name:" << this->name << endl;
-			return -1;
+	//if(!is_same<T,float>::value){
+	//	cerr<< "get_cpu_usage_sample base type is not float" <<endl;
+	//	return -1;
+	//}
+	vector<pair<long long,float>> merge;
+	int cnt = 0;
+	cpu* cpu_ptr = owner->first_cpu();
+	do{
+		const deque<pair<long long,float>>& q = cpu_ptr->samples;
+		for(int i=0; i<q.size(); i++){
+			if(i >= merge.size()){
+				merge.push_back(make_pair(0, 0));
+			}
+			//assert(merge[i].first==0 || merge[i].first == q[i].first);
+			if( merge[i].first == 0)
+				merge[i].first = q[i].first;
+			assert(merge[i].first == q[i].first);
+			merge[i].second+=q[i].second;
 		}
-		else{
-			return ((int (*)(sample_queue<int>*, node*))get_sample_func_map[this->name])(this, owner);
-		}
+		cnt++;
+	}while(cpu_ptr = owner->next_cpu());
+	for(int i = 0; i < merge.size(); i++){
+		merge[i].second /= cnt;
 	}
-}
-
-template<>
-int sample_queue<float>::get_sample(long long vm_start_time_sec_unix){
-        assert(xs_dir.empty());
-        if(get_sample_func_map.find(this->name) == get_sample_func_map.end()){
-        	cerr << "get_sample: cannot find get sample func in func map, name:" << this->name << endl;
-                return -1;
-     	}
-        else{
-                return ((int (*)(sample_queue<float>*, node*))get_sample_func_map[this->name])(this, owner);
+        for(auto& m: merge){
+                bool dup;
+                int idx = return_insert_index(sq->sample, 0, sq->sample.size()-1, m.first, &dup);
+                if (!dup){
+                        sq->sample.insert(sq->sample.begin()+idx, m);
+                }
+                if(sq->sample.size() > sq->max_sample_size)
+                        sq->sample.pop_front();
         }
+	return 0;
 }
 
+int get_sample_from_xs(void* op1, void* op2, long long vm_start_time_sec_unix){
+	assert(op1 && vm_start_time_sec_unix);
+	auto sq = (sample_queue<int>*)op1;
+	assert(sq->xs && !sq->xs_dir.empty());
+	string curr_sample_num;
+      	//long long valid_ts = (time(0) - vm_start_time_sec_unix)*1000 - VALID_SAMPLE_INTERVAL_MS;
+      	if(read_from_xenstore_path(sq->xs, sq->xs_dir, curr_sample_num) == 0){
+      	        crawl_samples_from_xs(sq->xs, sq->xs_dir, sq->sample, 
+				sq->max_sample_size, vm_start_time_sec_unix*1000);
+      	        return 0;
+      	}
+      	else{
+      	        cerr << "Sample dir may not exit: " << sq->xs_dir << endl;
+      	        return -1;
+      	}
+}
 
+unordered_map<string, int (*)(void*, void*, long long)> get_sample_func_map = {
+        { CPU_USAGE_SQ, get_cpu_usage_sample },
+	{ BW_USAGE_SQ, get_sample_from_xs}
+	//{ NUM_OF_THREAD_SQ, (int (*)(void*, void*))get_num_thread_sample }
+};
+
+//int get_num_thread_sample(sample_queue<int>* , ){
+
+//}

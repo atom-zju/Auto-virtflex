@@ -48,7 +48,7 @@ public:
 	string xs_dir;
 	string name;
 	struct xs_handle *xs;
-	node* owner;
+	void* owner;
 	dir map_dir;	
 	
 	static unordered_map<int, unordered_map<int, unordered_map<string, vector<sample_queue<T> *>>>> data_map;
@@ -59,7 +59,7 @@ public:
 	static vector<int> vnode_list(int vm);
 	
 	sample_queue(string xs_dir, struct xs_handle *xs, dir md, string name = TMP_NAME,
-				int max_size = MAX_SAMPLE_SIZE, node* owner=NULL); 
+				int max_size = MAX_SAMPLE_SIZE, void* owner=NULL); 
 		//xs_dir(xs_dir), xs(xs), name(name), max_sample_size(max_size), owner(owner);
 	~sample_queue();
 	void calculate_averages();
@@ -75,7 +75,6 @@ public:
 	void print(int num = 15);
 private:	
 	//static unordered_map<string, void(*)()> get_sample_func_map;
-	int get_sample_from_xs(long long vm_start_time_sec_unix);
 };
 
 /* implementation of the template class */
@@ -83,17 +82,14 @@ private:
 #include <sys/time.h>
 #include <iostream>
 
-//template <class T>
-//unordered_map<string, void (*)()> sample_queue<T>::get_sample_func_map = {
-//	{"cpu sample queue", (void (*)())get_cpu_usage_sample}
-//};
+extern unordered_map<string, int(*)(void*, void*, long long)> get_sample_func_map;
 
 template<class T>
 unordered_map<int, unordered_map<int, unordered_map<string, vector<sample_queue<T>*>>>> sample_queue<T>::data_map;
 
 template<class T>
 sample_queue<T>::sample_queue(string xs_dir, struct xs_handle *xs, dir md, string name,
-		int max_size, node* owner): 
+		int max_size, void* owner): 
 		xs_dir(xs_dir), xs(xs), name(name), max_sample_size(max_size), owner(owner), map_dir(md){
 	data_map[map_dir.vm][map_dir.node][name].push_back(this);
 }
@@ -231,56 +227,17 @@ pair<long long, T> sample_queue<T>::get_nearst_data_point(long long ux_ts_ms){
 	return sample[lo];
 }
 
-/* Crawling samples from xenstore doesn't have any valid timestamp restrictions,
-   crawl it all. */
-template <class T>
-int sample_queue<T>::get_sample_from_xs(long long vm_start_time_sec_unix){
-	if(!xs)
+template<class T>
+int sample_queue<T>::get_sample(long long vm_start_time_sec_unix){
+	if(get_sample_func_map.find(this->name) == get_sample_func_map.end()){
+		cerr << "get_sample: cannot find get sample func in func map, name:" << this->name << endl;
 		return -1;
-	if(!is_same<T, int>::value){
-          	cout << "get_sample_from_xs: type error" << endl;
-          	return -1;
-      	}
-	string curr_sample_num;
-	//long long valid_ts = (time(0) - vm_start_time_sec_unix)*1000 - VALID_SAMPLE_INTERVAL_MS;
-	if(read_from_xenstore_path(xs, xs_dir, curr_sample_num) == 0){
-		crawl_bw_samples_from_xs(xs, xs_dir, sample, max_sample_size, vm_start_time_sec_unix*1000);
-		return 0;
 	}
 	else{
-		cerr << "Sample dir may not exit: " << xs_dir << endl;
-		return -1;
+		return (get_sample_func_map[this->name])((void*)this, 
+				owner, vm_start_time_sec_unix);
 	}
 }
-
-//template<>
-//int sample_queue<int>::get_sample(long long vm_start_time_sec_unix){
-//	if(!xs_dir.empty()){
-//		assert(vm_start_time_sec_unix);
-//		return get_sample_from_xs(vm_start_time_sec_unix);
-//	}
-//	else{
-//		if(get_sample_func_map.find(this->name) == get_sample_func_map.end()){
-//			cerr << "get_sample: cannot find get sample func in func map, name:" << this->name << endl;
-//			return -1;
-//		}
-//		else{
-//			return ((int (*)(sample_queue<int>*, node*))get_sample_func_map[this->name])(this, owner);
-//		}
-//	}
-//}
-//
-//template<>
-//int sample_queue<float>::get_sample(long long vm_start_time_sec_unix){
-//        assert(xs_dir.empty());
-//        if(get_sample_func_map.find(this->name) == get_sample_func_map.end()){
-//        	cerr << "get_sample: cannot find get sample func in func map, name:" << this->name << endl;
-//                return -1;
-//     	}
-//        else{
-//                return ((int (*)(sample_queue<float>*, node*))get_sample_func_map[this->name])(this, owner);
-//        }
-//}
 
 template <class T>
 T sample_queue<T>::average_value_since_ts(long long valid_ts){

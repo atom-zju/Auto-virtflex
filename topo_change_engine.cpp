@@ -364,7 +364,7 @@ int topo_change_engine::generate_new_topo_map(unordered_map<string, sys_map_base
 	// enable/disable node according to bw
         for(auto& vm_id: bw_sys.vm_list()){
 		cout << "vm " << vm_id << " avg_bw: " << bw_sys.vm_avg(vm_id) << endl;
-                if( bw_sys.vm_avg(vm_id) > 600 ){
+                if( bw_sys.vm_avg(vm_id, &old_sys) > 600 ){
                         //int vnode = old_sys.min_vnode_in_vm(vm_id);
 			auto pnode_list = new_sys.pnode_list();
 			new_sys.sort_pnode_by_sum(pnode_list);

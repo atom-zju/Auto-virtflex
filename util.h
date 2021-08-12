@@ -26,11 +26,9 @@ int list_xenstore_directory(struct xs_handle* xs, const string path, vector<stri
 template <class T>
 int return_insert_index(deque<pair<long long, T>>& samples, int lo, int hi, long long timestamp, bool* dup);
 
-void crawl_bw_samples_from_xs(struct xs_handle * xs, string dir, deque<pair<long long, int>>& samples, int max_sample_size, long long start_time_ms);
+void crawl_samples_from_xs(struct xs_handle * xs, string dir, deque<pair<long long, int>>& samples, int max_sample_size, long long start_time_ms);
 
 int get_cpu_usage_sample(sample_queue<float>* sq, node* n);
-
-extern unordered_map<string, void(*)()> get_sample_func_map;
 
 /*
 	deque<pair<long long, int>>& samples are sorted in chronological order with the earliest sample in front

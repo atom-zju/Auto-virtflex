@@ -3,15 +3,10 @@
 #include <cstdio>
 #include <cstring>
 #include <iostream>
-#include "cpu.h"
-#include "node.h"
 #include "topo_change.h"
 
 using namespace std;
 
-unordered_map<string, void (*)()> get_sample_func_map = {
-        {CPU_USAGE_SQ, (void (*)())get_cpu_usage_sample}
-};
 
 int write_to_xenstore_path(struct xs_handle* xs, const string path, const string value){
 	
@@ -139,7 +134,7 @@ int list_xenstore_directory(struct xs_handle* xs, const string path, vector<stri
 
 
 
-void crawl_bw_samples_from_xs(struct xs_handle * xs, string dir, deque<pair<long long, int>>& samples, int max_sample_size, long long start_time_ms){
+void crawl_samples_from_xs(struct xs_handle * xs, string dir, deque<pair<long long, int>>& samples, int max_sample_size, long long start_time_ms){
 	string val_str;
 	string timestamp_str;
 	int sample_cnt = 0;
@@ -172,47 +167,5 @@ void crawl_bw_samples_from_xs(struct xs_handle * xs, string dir, deque<pair<long
 		sample_cnt++;
 	} while(1);
 
-}
-
-//template <class T>
-int get_cpu_usage_sample(sample_queue<float>* sq, node* owner){
-	if(!owner){
-		cerr<< "get_cpu_usage_sample using a NULL node pointer" << endl;	
-		return -1;
-	}
-	//if(!is_same<T,float>::value){
-	//	cerr<< "get_cpu_usage_sample base type is not float" <<endl;
-	//	return -1;
-	//}
-	vector<pair<long long,float>> merge;
-	int cnt = 0;
-	cpu* cpu_ptr = owner->first_cpu();
-	do{
-		const deque<pair<long long,float>>& q = cpu_ptr->samples;
-		for(int i=0; i<q.size(); i++){
-			if(i >= merge.size()){
-				merge.push_back(make_pair(0, 0));
-			}
-			//assert(merge[i].first==0 || merge[i].first == q[i].first);
-			if( merge[i].first == 0)
-				merge[i].first = q[i].first;
-			assert(merge[i].first == q[i].first);
-			merge[i].second+=q[i].second;
-		}
-		cnt++;
-	}while(cpu_ptr = owner->next_cpu());
-	for(int i = 0; i < merge.size(); i++){
-		merge[i].second /= cnt;
-	}
-        for(auto& m: merge){
-                bool dup;
-                int idx = return_insert_index(sq->sample, 0, sq->sample.size()-1, m.first, &dup);
-                if (!dup){
-                        sq->sample.insert(sq->sample.begin()+idx, m);
-                }
-                if(sq->sample.size() > sq->max_sample_size)
-                        sq->sample.pop_front();
-        }
-	return 0;
 }
 

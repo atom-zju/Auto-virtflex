@@ -110,6 +110,7 @@ void pnode::grab_bw_sample(){
 								dir(SYS_VM_ID, pnode_id)));
 			bw_rd_sq_grabber[ch]->clear_sample();
 			bw_rd_sq_grabber[ch]->xs_dir = xs_dir;
+			bw_rd_sq_grabber[ch]->name = BW_USAGE_SQ;
 			if( bw_rd_sq_grabber[ch]->get_sample(owner_vnode->owner_vm->start_time_sec_unix) < 0)
 				cerr << "can't get sample in grab_bw_sample" <<endl;	
 		}
@@ -124,6 +125,7 @@ void pnode::grab_bw_sample(){
 								dir(SYS_VM_ID, pnode_id)));
                         bw_wr_sq_grabber[ch]->clear_sample();
                         bw_wr_sq_grabber[ch]->xs_dir = xs_dir;
+			bw_rd_sq_grabber[ch]->name = BW_USAGE_SQ;
                         if( bw_wr_sq_grabber[ch]->get_sample(owner_vnode->owner_vm->start_time_sec_unix) < 0)
                                 cerr << "can't get sample in grab_bw_sample" <<endl;
                 }

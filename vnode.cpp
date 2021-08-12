@@ -47,7 +47,7 @@ void vnode::update_node(unsigned int ts){
 	}
 	if(!cpu_usage_sq){
 		cpu_usage_sq = new sample_queue<float>(string(""), NULL,
-				dir(owner_vm->vm_id, vnode_id), CPU_USAGE_SQ, MAX_SAMPLE_SIZE, (node*)this);
+				dir(owner_vm->vm_id, vnode_id), CPU_USAGE_SQ, MAX_SAMPLE_SIZE, (void*)this);
 	}
 	cpu_usage_sq->get_sample();
 	//cpu_usage_sq->calculate_averages();
