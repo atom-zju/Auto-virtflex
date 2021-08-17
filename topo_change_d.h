@@ -26,6 +26,8 @@ class topo_change_d {
 	friend class vm_logger;
 	friend int topology_sys_map_update(topo_change_d*, void*, long long);
 	friend int home_node_sys_map_update(topo_change_d*, void*, long long);
+	friend int num_vcpu_sys_map_update(topo_change_d*, void*, long long);
+	friend int node_size_sys_map_update(topo_change_d*, void*, long long);
 private:
 	unordered_map<int, vm*> vm_map;
 	vector<pnode*> pnode_list;

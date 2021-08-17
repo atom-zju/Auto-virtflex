@@ -12,11 +12,12 @@ class topo_change_d;
 
 using namespace std;
 
-#define TOPO_SYS_MAP "topology_sys_map"			// base type: int, data_source: vnode_map
-#define HOME_NODE_SYS_MAP "home_node_sys_map"		// base type: int, data_source: vnode_map
-#define VCPU_USAGE_SYS_MAP "vcpu usage sys map"		// base type: float, data source: sample_queue::data_map
-#define BW_USAGE_SYS_MAP "bw usage sys map"		// base type: int, data source: sq::data_map
-#define NUM_THREAD_SYS_MAP "num of threads sys map"	// base type: int, data source: sq::data_map
+#define TOPO_SYS_MAP "topology_sys_map"			// * base type: int, data_source: vnode_map
+#define HOME_NODE_SYS_MAP "home_node_sys_map"		// * base type: int, data_source: vnode_map
+#define VCPU_USAGE_SYS_MAP "vcpu usage sys map"		// * base type: float, data source: sample_queue::data_map
+#define NUM_VCPU_SYS_MAP "num of vcpu sys map"		// base type: int, data source: vnode_map
+#define BW_USAGE_SYS_MAP "bw usage sys map"		// * base type: int, data source: sq::data_map
+#define NUM_THREAD_SYS_MAP "num of threads sys map"	// * base type: int, data source: sq::data_map
 #define NODE_SIZE_SYS_MAP "node size sys map"		// base type: int, data source: vnode_map
 #define FREE_CLEAN_MEM_PERCNT "free and clean memory portion"	// base type: float, data source: sq::data_map
 

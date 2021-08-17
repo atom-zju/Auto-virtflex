@@ -39,6 +39,31 @@ int home_node_sys_map_update(topo_change_d* topod, void* map, long long since_ux
         return 0;
 }
 
+int node_size_sys_map_update(topo_change_d* topod, void* map, long long since_ux_ts_ms){
+	auto smap = (sys_map<int>*) map;
+	for(auto& vm: topod->vm_map){
+		if(vm.first == 0)
+			continue;
+		for(auto& vnode: vm.second->vnode_map){
+			int data = vnode.second->node_size_in_mb();
+			smap->push_back(map_record<int>(vm.first, vnode.first, vnode.second->pnode_id, data));
+		}
+	}
+	return 0;	
+}
+int num_vcpu_sys_map_update(topo_change_d* topod, void* map, long long since_ux_ts_ms){
+	auto smap = (sys_map<int>*) map;	
+	for(auto& vm: topod->vm_map){
+		if(vm.first == 0)
+			continue;
+		for(auto& vnode: vm.second->vnode_map){
+			int data = vnode.second->num_active_vcpu();
+                        smap->push_back(map_record<int>(vm.first, vnode.first, vnode.second->pnode_id, data));
+		}
+	}
+	return 0;
+}
+
 int vcpu_usage_sys_map_update(topo_change_d* topod, void* map, long long since_ux_ts_ms){
 
 	//cout << "update vcpu usage sys map" << endl;
@@ -120,5 +145,7 @@ unordered_map<string, int (*)(topo_change_d*, void*, long long)> sys_map_func_ma
 	{VCPU_USAGE_SYS_MAP, vcpu_usage_sys_map_update},
 	{BW_USAGE_SYS_MAP, bw_usage_sys_map_update}, 
 	{HOME_NODE_SYS_MAP, home_node_sys_map_update},
-	{NUM_THREAD_SYS_MAP, num_thread_sys_map_update}
+	{NUM_THREAD_SYS_MAP, num_thread_sys_map_update},
+	{NODE_SIZE_SYS_MAP, node_size_sys_map_update},
+	{NUM_VCPU_SYS_MAP, num_vcpu_sys_map_update}
 };

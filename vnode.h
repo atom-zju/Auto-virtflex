@@ -27,6 +27,8 @@ public:
 	long long get_recent_vcpu_usage();
 	float get_average_vcpu_load();
 	int active_nodes_in_pnode();
+	int node_size_in_mb();
+	int num_active_vcpu();
 	//void read_bw_usage_from_xs();
 	void clear_bw_sq();
 	int change_pnode_owner_xs(bool own);

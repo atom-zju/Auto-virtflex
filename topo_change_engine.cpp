@@ -338,8 +338,10 @@ void topo_change_engine::generate_sys_map_table(){
                 sys_map_table[HOME_NODE_SYS_MAP] = new sys_map<int>(HOME_NODE_SYS_MAP);
         if(sys_map_table.find(NUM_THREAD_SYS_MAP) == sys_map_table.end())
                 sys_map_table[NUM_THREAD_SYS_MAP] = new sys_map<int>(NUM_THREAD_SYS_MAP);
-        //if(sys_map_table.find(TOPO_SYS_MAP) == sys_map_table.end())
-        //        sys_map_table[TOPO_SYS_MAP] = new sys_map<int>(TOPO_SYS_MAP);
+        if(sys_map_table.find(NUM_VCPU_SYS_MAP) == sys_map_table.end())
+                sys_map_table[NUM_VCPU_SYS_MAP] = new sys_map<int>(NUM_VCPU_SYS_MAP);
+        if(sys_map_table.find(NODE_SIZE_SYS_MAP) == sys_map_table.end())
+                sys_map_table[NODE_SIZE_SYS_MAP] = new sys_map<int>(NODE_SIZE_SYS_MAP);
 }
 
 int topo_change_engine::generate_new_topo_map(unordered_map<string, sys_map_base*>& sys_map_tbl, sys_map<int>& new_sys){
@@ -356,6 +358,8 @@ int topo_change_engine::generate_new_topo_map(unordered_map<string, sys_map_base
 	sys_map<int>& bw_sys = *(sys_map<int>*)sys_map_tbl[BW_USAGE_SYS_MAP];
         sys_map<float>& cpu_sys = *(sys_map<float>*)sys_map_tbl[VCPU_USAGE_SYS_MAP];
         sys_map<int>& num_thread_sys = *(sys_map<int>*)sys_map_tbl[NUM_THREAD_SYS_MAP];
+        sys_map<int>& node_size_sys = *(sys_map<int>*)sys_map_tbl[NODE_SIZE_SYS_MAP];
+        sys_map<int>& num_vcpu_sys = *(sys_map<int>*)sys_map_tbl[NUM_VCPU_SYS_MAP];
 	old_sys.print();
         bw_sys.print();
         cpu_sys.print();
@@ -366,10 +370,12 @@ int topo_change_engine::generate_new_topo_map(unordered_map<string, sys_map_base
         bw_sys.print();
         //bw_sys.same_dimension_zero_fill(old_sys);
 	
-	// test num_thread_sys_map
-	//sys_map<int> num_thread_sys(NUM_THREAD_SYS_MAP);
-        //num_thread_sys.update(topod ,(time(NULL)-10)*1000);
-	//num_thread_sys.print();
+	// test sys_map
+	//sys_map<int> test_sys(NODE_SIZE_SYS_MAP);
+        //test_sys.update(topod, (time(NULL)-10)*1000);
+	//test_sys.print();
+	node_size_sys.print();
+	num_vcpu_sys.print();
 
 	// enable/disable node according to bw
         for(auto& vm_id: bw_sys.vm_list()){

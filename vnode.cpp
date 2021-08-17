@@ -133,6 +133,19 @@ long vnode::average_bw_usage(){
 		return (long)((long long)topod->pnode_average_bw_usage(pnode_id)*usg)/total_usg;
 }
 
+int vnode::node_size_in_mb(){
+	if(enabled)
+		return capacity/1024;
+	else
+		return low_target/1024;
+}
+int vnode::num_active_vcpu(){
+	if(enabled)
+		return cpu_map.size();
+	else
+		return vnode_id == 0? 1: 0;
+}
+
 void vnode::calculate_bw_sample_queue_averages(){
 	for(int i=0; i < bw_rd_channel_sample.size(); i++){
 		bw_rd_channel_sample[i]->calculate_averages();
