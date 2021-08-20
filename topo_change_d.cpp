@@ -22,6 +22,19 @@ vm* topo_change_d::get_vm_by_id(int id){
 	return NULL;
 }
 
+vector<int> topo_change_d::vm_list(){
+	vector<int> res;
+	for(auto& x: vm_map){
+		if(x.first != 0)
+			res.push_back(x.first);
+	}
+	return res;
+}
+
+string topo_change_d::get_xs_path(){
+	return xs_path;
+}
+
 int topo_change_d::vnode_to_pnode(int vm_id, int vnode_id){
 	if(vm_map.find(vm_id) == vm_map.end() || 
 		vm_map[vm_id]->vnode_map.find(vnode_id) == vm_map[vm_id]->vnode_map.end())
@@ -42,6 +55,7 @@ int topo_change_d::set_reserved_vnode_id(int vm_id, int vnode_id){
 topo_change_d::topo_change_d(){
 	ts = 0;
 	xs =  xs_daemon_open();
+	xs_path = "/local/domain";
         if ( xs == NULL ) {
                 perror("Error when connecting to a xs daemon\n");
                 exit(-1);
@@ -86,7 +100,7 @@ topo_change_d::~topo_change_d(){
 void topo_change_d::update_vm_map(){
 	ts++;
 	vector<string> dir;
-	list_xenstore_directory(xs, string("/local/domain"), dir);
+	list_xenstore_directory(xs, xs_path, dir);
 	//cout<<"/local/domain"<< endl;
 	cout << UNIX_TS<< "\tUpdating vm_map" << endl;
 	if(file_output)
@@ -97,7 +111,7 @@ void topo_change_d::update_vm_map(){
 		if(file_output)
 		of << UNIX_TS<<"\t\t" <<"VM: "<<stoi(x) << endl;
 		if(vm_map.find(vm_id) == vm_map.end()){
-			vm* v = new vm(vm_id, this, string("/local/domain/").append(x));
+			vm* v = new vm(vm_id, this, xs_path+"/"+x);
 			v->update_vnode_map(ts);
 			vm_map[vm_id] = v;	
 		}

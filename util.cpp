@@ -73,6 +73,11 @@ int list_xenstore_directory(struct xs_handle* xs, const string path, vector<stri
 
 }
 
+bool xenstore_directory_is_valid(struct xs_handle* xs, const string path){
+	vector<string> v;
+	return list_xenstore_directory(xs, path, v) == 0;	
+}
+
 /*
         xenstore stats directory structure:
                 numa/node/<node_id>/bw_usage_rd_0/curr_sample_num
@@ -169,3 +174,43 @@ void crawl_samples_from_xs(struct xs_handle * xs, string dir, deque<pair<long lo
 
 }
 
+/* xenstore structure of workload_attr:
+ *      /local/domain/#vm_id/numa/workload/
+ *                                      attr0_name
+ *                                      attr0_val
+ *                                      attr1_name
+ *                                      attr1_val
+ * */
+
+static int get_single_workload_attr_from_xs(struct xs_handle* xs, string xs_path, 
+		int attr_num, pair<string, string>& ret){
+	string attr_name_path = xs_path, attr_val_path = xs_path;
+	attr_name_path.append("/attr"+to_string(attr_num)+"_name");	
+	attr_val_path.append("/attr"+to_string(attr_num)+"_val");
+	if(read_from_xenstore_path(xs, attr_name_path, ret.first) < 0)
+		return -1;
+	if(read_from_xenstore_path(xs, attr_val_path, ret.second) < 0)
+                return -1;
+	return 0;
+}
+
+int get_workload_attr_from_xs(struct xs_handle* xs, const string xs_path, unordered_map<string, long long>& attr_map){
+	int cnter = 0;
+	if(!xenstore_directory_is_valid(xs, xs_path))	
+		return -1;
+	pair<string, string> attr_pair;
+	while(get_single_workload_attr_from_xs(xs, xs_path, cnter, attr_pair) >= 0){
+		cnter++;
+		long long val;
+		// converstion from attr_pair.second to long long val
+		try{
+                       	val = stoll(attr_pair.second);
+                }
+                catch(...){
+                        cerr << "stoll error in get_workload_attr_from_xs, string: " << attr_pair.second << endl;
+                        continue;
+                }
+		attr_map[attr_pair.first] = val;
+	}
+	return 0;
+}

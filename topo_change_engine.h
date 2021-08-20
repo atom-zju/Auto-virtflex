@@ -5,6 +5,7 @@
 #include <queue>
 #include "vm.h"
 #include "topo_change_d.h"
+#include "workload_attr.h"
 
 template<class T>
 class sys_map;
@@ -29,6 +30,7 @@ class topo_change_engine{
 		priority_queue<event_candidate, vector<event_candidate>, comp> expand_heap;
 		priority_queue<event_candidate, vector<event_candidate>, comp> shrink_heap;
 		topo_change_d* topod;
+		workload_attr* wlattr;
 		int (*topo_changeness)(vm* v);
 		int (*shrink_candidate)(vm* v, int num, vector<int>& can);
 		int (*expand_candidate)(vm* v, int num, vector<int>& can);
@@ -41,7 +43,7 @@ class topo_change_engine{
 		int generate_topo_change_events(sys_map<int>& new_sys, sys_map<int>& old_sys,
 						deque<topo_change_event>& e);//////////
 	public:
-		topo_change_engine(topo_change_d* t): topod(t) {}	
+		topo_change_engine(topo_change_d* t);
 		~topo_change_engine();
 		void config();
 		int generate_events2(deque<topo_change_event>& e);

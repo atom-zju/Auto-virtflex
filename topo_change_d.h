@@ -3,6 +3,7 @@
 
 #include<unordered_map>
 #include<deque>
+#include <vector>
 #include "vm.h"
 #include "pnode.h"
 #include "util.h"
@@ -39,6 +40,7 @@ private:
 	unsigned int interval_us;
 	unsigned int ts; // timestamp
 	topo_change_engine* engine;
+	string xs_path; 
 	
 	vm* get_vm_by_id(int id);
 	int add_vm(vm*);
@@ -53,6 +55,8 @@ public:
 	int shrink_vm(int id, int vnode_id);
 	int expand_vm(int id, int vnode_id);
 
+	vector<int> vm_list();
+	string get_xs_path();
 	int vnode_to_pnode(int vm_id, int vnode_id);
 	int reserved_vnode_id(int vm_id);
 	int set_reserved_vnode_id(int vm_id, int vnode_id);

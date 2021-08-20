@@ -23,6 +23,10 @@ int read_from_xenstore_path(struct xs_handle* xs, const string path, string& s);
 
 int list_xenstore_directory(struct xs_handle* xs, const string path, vector<string>& res);
 
+bool xenstore_directory_is_valid(struct xs_handle* xs, const string path);
+
+int get_workload_attr_from_xs(struct xs_handle* xs, const string xs_path, unordered_map<string, long long>& attr_map);
+
 template <class T>
 int return_insert_index(deque<pair<long long, T>>& samples, int lo, int hi, long long timestamp, bool* dup);
 

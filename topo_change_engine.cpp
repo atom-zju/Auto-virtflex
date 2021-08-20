@@ -176,7 +176,13 @@ static int first_available_candidate(vm* v, int num, vector<int>& can){
 	return 0;
 }
 
+topo_change_engine::topo_change_engine(topo_change_d* t): topod(t){
+	wlattr = new workload_attr(topod->xs, topod);
+}
+
 topo_change_engine::~topo_change_engine(){
+	if(wlattr)
+		delete wlattr;
 	for(auto& x: sys_map_table)
 		if(x.second)
 			delete x.second;
@@ -371,7 +377,9 @@ int topo_change_engine::generate_new_topo_map(unordered_map<string, sys_map_base
 	auto cpu_vm_sys = num_vcpu_sys.shrink_vm_sum();
 	cpu_vm_sys.print();
         //bw_sys.same_dimension_zero_fill(old_sys);
-	
+	wlattr->update();
+	wlattr->print();
+
 	// test sys_map
 	//sys_map<int> test_sys(NODE_SIZE_SYS_MAP);
         //test_sys.update(topod, (time(NULL)-10)*1000);
