@@ -6,6 +6,7 @@
 #include <vector>
 #include <unordered_map>
 #include <cassert>
+#include "topo_change.h"
 
 //#define MAX_SAMPLE_SIZE 10
 #define MAX_SAMPLE_SIZE 2000
@@ -13,11 +14,11 @@
 #define SHORT_TERM_AVG_TS_SEC 60 
 #define LONG_TERM_AVG_TS_SEC 600
 
-#define TMP_DIR -2
-#define TMP_NAME "temporary"
-#define SYS_VM_ID -1
-#define SYS_NODE_ID -1
-#define INVALID_SQ -3
+//#define TMP_DIR -2
+//#define TMP_NAME "temporary"
+//#define SYS_VM_ID -1
+//#define SYS_NODE_ID -1
+//#define INVALID_SQ -3
 
 #define CPU_USAGE_SQ "cpu sample queue"
 #define NUM_OF_THREAD_SQ "num of threads sample queue"

@@ -368,6 +368,8 @@ int topo_change_engine::generate_new_topo_map(unordered_map<string, sys_map_base
 	home_node_sys.update(topod);
         bw_sys.prune(old_sys);
         bw_sys.print();
+	auto cpu_vm_sys = num_vcpu_sys.shrink_vm_sum();
+	cpu_vm_sys.print();
         //bw_sys.same_dimension_zero_fill(old_sys);
 	
 	// test sys_map

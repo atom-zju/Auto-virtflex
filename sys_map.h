@@ -7,6 +7,7 @@
 #include <vector>
 #include <queue>
 #include <cassert>
+#include "topo_change.h"
 
 class topo_change_d;
 
@@ -80,6 +81,11 @@ class sys_map: public sys_map_base {
 	void add(T scalar);
 	void add(sys_map_base* );
 	void negate();
+        sys_map<T> shrink_vm_avg(); /////
+        sys_map<T> shrink_vm_sum(); /////
+        sys_map<int> equal_to(T num); /////
+        sys_map<int> larger_than(T num); /////
+        sys_map<int> smaller_than(T num); /////
 	T vm_avg(int vm_id, sys_map<int>* mask = NULL);
 	T vm_sum(int vm_id, sys_map<int>* mask = NULL);
 	void sort_vm_by_sum(vector<int>& vm_list, sys_map<int>* mask = NULL);
@@ -154,6 +160,25 @@ void sys_map<T>::negate(){
 		}
 	}
 }
+
+template<class T>
+sys_map<T> sys_map<T>::shrink_vm_avg(){
+	sys_map<T> res;
+	for(auto& vm_id: vm_list()){
+		res.push_back(map_record<T>(vm_id, SYS_NODE_ID, SYS_NODE_ID, vm_avg(vm_id)));
+	}
+	return res;
+}
+
+template<class T>
+sys_map<T> sys_map<T>::shrink_vm_sum(){
+	sys_map<T> res;
+	for(auto& vm_id: vm_list()){
+		res.push_back(map_record<T>(vm_id, SYS_NODE_ID, SYS_NODE_ID, vm_sum(vm_id)));
+	}
+	return res;
+}
+
 template<class T>
 void sys_map<T>::same_dimension_zero_fill(sys_map<int>& topo_mask){
 	for(auto& vm_id: topo_mask.vm_list()){
