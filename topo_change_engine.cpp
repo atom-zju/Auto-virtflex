@@ -473,6 +473,11 @@ int topo_change_engine::generate_topo_change_events(sys_map<int>& new_sys, sys_m
 	return 0;	
 }
 
+void topo_change_engine::mark_sys_map_table_outdated(){
+	for(auto& x: sys_map_table)
+		x.second->mark_outdated();
+}
+
 int topo_change_engine::generate_events(deque<topo_change_event>& e){
 	generate_sys_map_table();
 	print_last_record(sys_map_table, topod);
@@ -483,6 +488,7 @@ int topo_change_engine::generate_events(deque<topo_change_event>& e){
 		return -1;
 	if(generate_topo_change_events(new_sys, old_sys, e) < 0)
 		return -1;
+	mark_sys_map_table_outdated();
 	return 0;
 }
 

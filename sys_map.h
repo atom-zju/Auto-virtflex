@@ -46,6 +46,7 @@ public:
 	virtual vector<int> pnode_list() = 0 ;
 	virtual vector<int> vm_list_within_pnode(int) = 0 ;
 	virtual int update(topo_change_d*, long long since_ux_ts_ms) = 0;
+	virtual void mark_outdated() = 0;
 	//virtual map_record<T> vm_view(int vm_id, int vnode_id);
 	//virtual map_record<T> pnode_view(int pnode_id, int vm_id);
 };
@@ -58,45 +59,59 @@ class sys_map: public sys_map_base {
 	vector<map_record<T>> records;/////////////////
 	unordered_map<int, unordered_map<int, int>> vm_map;/////////////////
 	unordered_map<int, unordered_map<int, int>> pnode_map;///////////////
+	bool updated;
+
+	sys_map(string name): name(name), ux_ts_ms(0), updated(false){}
+	sys_map(): ux_ts_ms(0), updated(false){}
+
+	void print();
+	string get_name();
+	void mark_outdated();
+
 	vector<int> vm_list(); 
 	vector<int> vnode_list(int vm_id);
 	vector<int> pnode_list();
 	vector<int> vm_list_within_pnode(int pnode_id);
-	sys_map(string name): name(name), ux_ts_ms(0){}
-	sys_map(): ux_ts_ms(0){}
+
 	void push_back(map_record<T> m);
 	void del_entry_vm_view(int vm_id, int vnode_id);
 	void clear();
-	void print();
-	string get_name();
+	
 	map_record<T>& vm_view(int vm_id, int vnode_id);
 	map_record<T>& pnode_view(int pnode_id, int vm_id);
+
 	void prune(sys_map<int>& topo_mask);
 	void same_dimension_zero_fill(sys_map<int>& topo_mask);
 	bool record_exist_vm_view(int vm_id, int vnode_id);
 	bool record_exist_pnode_view(int pnode_id, int vm_id);
+
 	void normalize();
 	void mul(T scalar);
 	void mul(sys_map_base*);
 	void add(T scalar);
 	void add(sys_map_base* );
 	void negate();
+
         sys_map<T> shrink_vm_avg(); /////
         sys_map<T> shrink_vm_sum(); /////
         sys_map<int> equal_to(T num); /////
         sys_map<int> larger_than(T num); /////
         sys_map<int> smaller_than(T num); /////
+
+	void sort_vm_by_sum(vector<int>& vm_list, sys_map<int>* mask = NULL);
+	void sort_pnode_by_sum(vector<int>& pnode_list, sys_map<int>* mask = NULL);
+	
 	T vm_avg(int vm_id, sys_map<int>* mask = NULL);
 	T vm_sum(int vm_id, sys_map<int>* mask = NULL);
-	void sort_vm_by_sum(vector<int>& vm_list, sys_map<int>* mask = NULL);
 	T pnode_sum(int pnode_id, sys_map<int>* mask = NULL);
-	void sort_pnode_by_sum(vector<int>& pnode_list, sys_map<int>* mask = NULL);
+	
 	int max_sum_pnode(sys_map<int>* mask = NULL);//////
 	int min_sum_pnode(sys_map<int>* mask = NULL);//////
 	int min_vnode_in_vm(int vm_id, sys_map<int>* mask = NULL);
 	int min_vm_in_pnode(int pnode_id, sys_map<int>* mask = NULL);
 	int max_vnode_in_vm(int vm_id, sys_map<int>* mask = NULL);
 	int max_vm_in_pnode(int pnode_id, sys_map<int>* mask = NULL);
+
 	int update(topo_change_d* topod, long long since_ux_ts_ms=0);
 };
 
@@ -119,6 +134,11 @@ void sys_map<T>::print(){
 template<class T>
 string sys_map<T>::get_name(){
 	return name;
+}
+
+template<class T>
+void sys_map<T>::mark_outdated(){
+	updated = false;	
 }
 
 template<class T>
@@ -475,6 +495,7 @@ int sys_map<T>::update(topo_change_d* topod, long long since_ux_ts_ms){
 	//assert(typeid(T) == sys_map_func_map[name].second);
 	clear();
 	ux_ts_ms = time(NULL)*1000;
+	updated = true;
 	return sys_map_func_map[name](topod, this, since_ux_ts_ms);
 }
 

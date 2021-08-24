@@ -147,5 +147,9 @@ unordered_map<string, int (*)(topo_change_d*, void*, long long)> sys_map_func_ma
 	{HOME_NODE_SYS_MAP, home_node_sys_map_update},
 	{NUM_THREAD_SYS_MAP, num_thread_sys_map_update},
 	{NODE_SIZE_SYS_MAP, node_size_sys_map_update},
-	{NUM_VCPU_SYS_MAP, num_vcpu_sys_map_update}
+	{NUM_VCPU_SYS_MAP, num_vcpu_sys_map_update}//,
+	///////////////////////////////////////////
+	//{IDLE_SYS_MAP, idle_sys_map_update},
+	//{TOPO_CHANGENESS_SYS_MAP, topo_changeness_sys_map_update},
+	//{SHRINK_NODE_RANK_SYS_MAP, shrink_node_rank_sys_map_update}
 };
