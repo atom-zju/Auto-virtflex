@@ -232,14 +232,17 @@ int topo_change_engine::get_sys_topo(sys_map<int>& old_sys){
 }
 
 
-static void print_last_record(unordered_map<string, sys_map_base*>& sys_map_tbl, topo_change_d* topod){
-	if(!file_output || sys_map_tbl.find(TOPO_SYS_MAP) == sys_map_tbl.end() ||
-           		sys_map_tbl.find(BW_USAGE_SYS_MAP) == sys_map_tbl.end() ||
-			sys_map_tbl.find(VCPU_USAGE_SYS_MAP) == sys_map_tbl.end())
-                return;
-	sys_map<int> topo_sys = *(sys_map<int>*)sys_map_tbl[TOPO_SYS_MAP];
-	sys_map<int> bw_sys = *(sys_map<int>*)sys_map_tbl[BW_USAGE_SYS_MAP];
-	sys_map<float> cpu_sys = *(sys_map<float>*)sys_map_tbl[VCPU_USAGE_SYS_MAP];
+void topo_change_engine::print_last_record(){
+	sys_map_base* topo_sys_ptr = get_sys_map(TOPO_SYS_MAP);
+	sys_map_base* bw_sys_ptr = get_sys_map(BW_USAGE_SYS_MAP);
+	sys_map_base* cpu_sys_ptr = get_sys_map(VCPU_USAGE_SYS_MAP);
+
+	assert(topo_sys_ptr && topo_sys_ptr->get_base_type() == "int");
+	sys_map<int> topo_sys = *(sys_map<int>*)topo_sys_ptr;
+	assert(bw_sys_ptr && bw_sys_ptr->get_base_type() == "int");
+	sys_map<int> bw_sys = *(sys_map<int>*)bw_sys_ptr;
+	assert(cpu_sys_ptr && cpu_sys_ptr->get_base_type() == "float");
+	sys_map<float> cpu_sys = *(sys_map<float>*)cpu_sys_ptr;
 
 	topo_sys.update(topod, -1);
 	bw_sys.update(topod, -1);
@@ -335,24 +338,31 @@ static bool home_node_assignment(topo_change_d* topod, sys_map<int> topo_sys, sy
 
 void topo_change_engine::generate_sys_map_table(){
 	if(sys_map_table.find(TOPO_SYS_MAP) == sys_map_table.end())
-		sys_map_table[TOPO_SYS_MAP] = new sys_map<int>(TOPO_SYS_MAP);
+		sys_map_table[TOPO_SYS_MAP] = new sys_map<int>(TOPO_SYS_MAP, this);
 	if(sys_map_table.find(VCPU_USAGE_SYS_MAP) == sys_map_table.end())
-                sys_map_table[VCPU_USAGE_SYS_MAP] = new sys_map<float>(VCPU_USAGE_SYS_MAP);
+                sys_map_table[VCPU_USAGE_SYS_MAP] = new sys_map<float>(VCPU_USAGE_SYS_MAP, this);
         if(sys_map_table.find(BW_USAGE_SYS_MAP) == sys_map_table.end())
-                sys_map_table[BW_USAGE_SYS_MAP] = new sys_map<int>(BW_USAGE_SYS_MAP);
+                sys_map_table[BW_USAGE_SYS_MAP] = new sys_map<int>(BW_USAGE_SYS_MAP, this);
         if(sys_map_table.find(HOME_NODE_SYS_MAP) == sys_map_table.end())
-                sys_map_table[HOME_NODE_SYS_MAP] = new sys_map<int>(HOME_NODE_SYS_MAP);
+                sys_map_table[HOME_NODE_SYS_MAP] = new sys_map<int>(HOME_NODE_SYS_MAP, this);
         if(sys_map_table.find(NUM_THREAD_SYS_MAP) == sys_map_table.end())
-                sys_map_table[NUM_THREAD_SYS_MAP] = new sys_map<int>(NUM_THREAD_SYS_MAP);
+                sys_map_table[NUM_THREAD_SYS_MAP] = new sys_map<int>(NUM_THREAD_SYS_MAP, this);
         if(sys_map_table.find(NUM_VCPU_SYS_MAP) == sys_map_table.end())
-                sys_map_table[NUM_VCPU_SYS_MAP] = new sys_map<int>(NUM_VCPU_SYS_MAP);
+                sys_map_table[NUM_VCPU_SYS_MAP] = new sys_map<int>(NUM_VCPU_SYS_MAP, this);
         if(sys_map_table.find(NODE_SIZE_SYS_MAP) == sys_map_table.end())
-                sys_map_table[NODE_SIZE_SYS_MAP] = new sys_map<int>(NODE_SIZE_SYS_MAP);
+                sys_map_table[NODE_SIZE_SYS_MAP] = new sys_map<int>(NODE_SIZE_SYS_MAP, this);
 }
 
 sys_map_base* topo_change_engine::get_sys_map(string sys_map_name){
 	if(sys_map_table.find(sys_map_name) == sys_map_table.end()){
-		sys_map_table[sys_map_name] = new sys_map<int>(sys_map_name); /////
+		if(sys_map_info_map.find(sys_map_name) == sys_map_info_map.end())
+			return NULL;
+		if(sys_map_info_map[sys_map_name].second == "int")
+			sys_map_table[sys_map_name] = new sys_map<int>(sys_map_name, this); /////
+		else if(sys_map_info_map[sys_map_name].second == "float")
+			sys_map_table[sys_map_name] = new sys_map<float>(sys_map_name, this);
+		else
+			return NULL;
 	}
 	if(sys_map_table[sys_map_name]->is_outdated())
 		sys_map_table[sys_map_name]->update(topod, 10);
@@ -389,6 +399,7 @@ int topo_change_engine::generate_new_topo_map(sys_map<int>& new_sys){
         //bw_sys.same_dimension_zero_fill(old_sys);
 	wlattr->update();
 	wlattr->print();
+	get_sys_map(IDLE_SYS_MAP)->print();
 
 	// test sys_map
 	//sys_map<int> test_sys(NODE_SIZE_SYS_MAP);
@@ -490,7 +501,7 @@ void topo_change_engine::mark_sys_map_table_outdated(){
 
 int topo_change_engine::generate_events(deque<topo_change_event>& e){
 	generate_sys_map_table();
-	print_last_record(sys_map_table, topod);
+	print_last_record();
 	sys_map<int> old_sys, new_sys;
 	if(generate_new_topo_map(new_sys)< 0)
 		return -1;

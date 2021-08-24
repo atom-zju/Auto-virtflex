@@ -38,8 +38,9 @@ class topo_change_engine{
 		int (*expand_candidate)(vm* v, int num, vector<int>& can);
 		void calculate_topo_changeness();
 
-		void generate_sys_map_table();
+		void print_last_record();
 		void mark_sys_map_table_outdated();
+		void generate_sys_map_table();
 		int get_sys_topo(sys_map<int>& old_sys);
 		int generate_new_topo_map(sys_map<int>& new_sys);
 		int generate_topo_change_events(sys_map<int>& new_sys, sys_map<int>& old_sys,

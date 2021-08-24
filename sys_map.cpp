@@ -3,8 +3,10 @@
 #include "sample_queue.h"
 #include "vm.h"
 #include "topo_change_d.h"
+#include "topo_change_engine.h"
 
-int topology_sys_map_update(topo_change_d* topod, void* map, long long since_ux_ts_ms){
+int topology_sys_map_update(topo_change_d* topod, sys_map_base* map, long long since_ux_ts_ms){
+	assert(map->get_base_type() == "int");
 	auto smap = (sys_map<int>*)map;
 	for(auto& vm: topod->vm_map){
 		if(vm.first == 0)
@@ -21,7 +23,8 @@ int topology_sys_map_update(topo_change_d* topod, void* map, long long since_ux_
 	return 0;	
 }
 
-int home_node_sys_map_update(topo_change_d* topod, void* map, long long since_ux_ts_ms){
+int home_node_sys_map_update(topo_change_d* topod, sys_map_base* map, long long since_ux_ts_ms){
+	assert(map->get_base_type() == "int");
 	auto smap = (sys_map<int>*)map;
 	for(auto& vm: topod->vm_map){
                 if(vm.first == 0)
@@ -39,7 +42,8 @@ int home_node_sys_map_update(topo_change_d* topod, void* map, long long since_ux
         return 0;
 }
 
-int node_size_sys_map_update(topo_change_d* topod, void* map, long long since_ux_ts_ms){
+int node_size_sys_map_update(topo_change_d* topod, sys_map_base* map, long long since_ux_ts_ms){
+	assert(map->get_base_type() == "int");
 	auto smap = (sys_map<int>*) map;
 	for(auto& vm: topod->vm_map){
 		if(vm.first == 0)
@@ -51,7 +55,8 @@ int node_size_sys_map_update(topo_change_d* topod, void* map, long long since_ux
 	}
 	return 0;	
 }
-int num_vcpu_sys_map_update(topo_change_d* topod, void* map, long long since_ux_ts_ms){
+int num_vcpu_sys_map_update(topo_change_d* topod, sys_map_base* map, long long since_ux_ts_ms){
+	assert(map->get_base_type() == "int");
 	auto smap = (sys_map<int>*) map;	
 	for(auto& vm: topod->vm_map){
 		if(vm.first == 0)
@@ -64,9 +69,10 @@ int num_vcpu_sys_map_update(topo_change_d* topod, void* map, long long since_ux_
 	return 0;
 }
 
-int vcpu_usage_sys_map_update(topo_change_d* topod, void* map, long long since_ux_ts_ms){
+int vcpu_usage_sys_map_update(topo_change_d* topod, sys_map_base* map, long long since_ux_ts_ms){
 
 	//cout << "update vcpu usage sys map" << endl;
+	assert(map->get_base_type() == "float");
 	auto smap = (sys_map<float>*)map;
 	auto& data_map = sample_queue<float>::data_map;
 	for(auto& vm_id: sample_queue<float>::vm_list())
@@ -92,9 +98,10 @@ int vcpu_usage_sys_map_update(topo_change_d* topod, void* map, long long since_u
 }
 
 
-int bw_usage_sys_map_update(topo_change_d* topod, void* map, long long since_ux_ts_ms){
+int bw_usage_sys_map_update(topo_change_d* topod, sys_map_base* map, long long since_ux_ts_ms){
 
 	cout << "update bw usage sys map" << endl;
+	assert(map->get_base_type() == "int");
 	auto smap = (sys_map<int>*)map;
 	auto& data_map = sample_queue<int>::data_map;
 	for(auto& vm_id: sample_queue<int>::vm_list())
@@ -121,7 +128,8 @@ int bw_usage_sys_map_update(topo_change_d* topod, void* map, long long since_ux_
 	return 0;
 }
 
-int num_thread_sys_map_update(topo_change_d* topod, void* map, long long since_ux_ts_ms){
+int num_thread_sys_map_update(topo_change_d* topod, sys_map_base* map, long long since_ux_ts_ms){
+	assert(map->get_base_type() == "int");
 	auto smap = (sys_map<int>*)map;
         auto& data_map = sample_queue<int>::data_map;
 	for(auto& vm_id: sample_queue<int>::vm_list()){
@@ -140,16 +148,28 @@ int num_thread_sys_map_update(topo_change_d* topod, void* map, long long since_u
 	return 0;
 }
 
-unordered_map<string, int (*)(topo_change_d*, void*, long long)> sys_map_func_map{
-	{TOPO_SYS_MAP, topology_sys_map_update},
-	{VCPU_USAGE_SYS_MAP, vcpu_usage_sys_map_update},
-	{BW_USAGE_SYS_MAP, bw_usage_sys_map_update}, 
-	{HOME_NODE_SYS_MAP, home_node_sys_map_update},
-	{NUM_THREAD_SYS_MAP, num_thread_sys_map_update},
-	{NODE_SIZE_SYS_MAP, node_size_sys_map_update},
-	{NUM_VCPU_SYS_MAP, num_vcpu_sys_map_update}//,
+int idle_sys_map_update(topo_change_d* topod, sys_map_base* map, long long since_ux_ts_ms){
+	assert(map->get_base_type() == "int");
+        auto smap = (sys_map<int>*)map;
+	auto vcpu_usage_sys = (sys_map<float>*) smap->topoe->get_sys_map(VCPU_USAGE_SYS_MAP);
+	float idle_thres = 0.05;
+	for(auto& vm_id: vcpu_usage_sys->vm_list()){
+		int data = vcpu_usage_sys->vm_sum(vm_id) > idle_thres? 1:0;
+		smap->push_back(map_record<int>(vm_id, SYS_NODE_ID, SYS_NODE_ID, data));
+	}
+	return 0;
+}
+
+unordered_map<string, pair<int (*)(topo_change_d*, sys_map_base*, long long), string>> sys_map_info_map{
+	{TOPO_SYS_MAP, {topology_sys_map_update, "int"}},
+	{VCPU_USAGE_SYS_MAP, {vcpu_usage_sys_map_update, "float"}},
+	{BW_USAGE_SYS_MAP, {bw_usage_sys_map_update, "int"}}, 
+	{HOME_NODE_SYS_MAP, {home_node_sys_map_update, "int"}},
+	{NUM_THREAD_SYS_MAP, {num_thread_sys_map_update, "int"}},
+	{NODE_SIZE_SYS_MAP, {node_size_sys_map_update, "int"}},
+	{NUM_VCPU_SYS_MAP, {num_vcpu_sys_map_update, "int"}},
 	///////////////////////////////////////////
-	//{IDLE_SYS_MAP, idle_sys_map_update},
+	{IDLE_SYS_MAP, {idle_sys_map_update, "int"}}//,
 	//{TOPO_CHANGENESS_SYS_MAP, topo_changeness_sys_map_update},
 	//{SHRINK_NODE_RANK_SYS_MAP, shrink_node_rank_sys_map_update}
 };

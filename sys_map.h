@@ -10,6 +10,7 @@
 #include "topo_change.h"
 
 class topo_change_d;
+class topo_change_engine;
 
 using namespace std;
 
@@ -21,8 +22,7 @@ using namespace std;
 #define NUM_THREAD_SYS_MAP "num of threads sys map"	// * base type: int, data source: sq::data_map
 #define NODE_SIZE_SYS_MAP "node size sys map"		// base type: int, data source: vnode_map
 #define FREE_CLEAN_MEM_PERCNT "free and clean memory portion"	// base type: float, data source: sq::data_map
-
-extern unordered_map<string, int (*)(topo_change_d*, void*, long long)> sys_map_func_map;
+#define IDLE_SYS_MAP "idle vm sys map"			// base type: int, data source VCPU_USAGE_SYS_MAP
 
 template<class T>
 class map_record{
@@ -48,25 +48,32 @@ public:
 	virtual int update(topo_change_d*, long long since_ux_ts_ms) = 0;
 	virtual void mark_outdated() = 0;
 	virtual bool is_outdated() = 0;
+	virtual void print() = 0;
+	virtual string get_base_type() = 0;
 	//virtual map_record<T> vm_view(int vm_id, int vnode_id);
 	//virtual map_record<T> pnode_view(int pnode_id, int vm_id);
 };
+
+extern unordered_map<string, pair<int (*)(topo_change_d*, sys_map_base*, long long), string>> sys_map_info_map;
 
 template <class T>
 class sys_map: public sys_map_base {
 	public:
 	string name;
+	string type;
 	long long ux_ts_ms;
 	vector<map_record<T>> records;/////////////////
 	unordered_map<int, unordered_map<int, int>> vm_map;/////////////////
 	unordered_map<int, unordered_map<int, int>> pnode_map;///////////////
 	bool updated;
+	topo_change_engine* topoe;
 
-	sys_map(string name): name(name), ux_ts_ms(0), updated(false){}
-	sys_map(): ux_ts_ms(0), updated(false){}
+	sys_map(string name, topo_change_engine* topoe);
+	sys_map(): ux_ts_ms(0), updated(false){} // this constructor with empty input list is for copy usage
 
 	void print();
 	string get_name();
+	string get_base_type();
 	void mark_outdated();
 	bool is_outdated();
 
@@ -118,6 +125,14 @@ class sys_map: public sys_map_base {
 };
 
 template<class T>
+sys_map<T>::sys_map(string name, topo_change_engine* topoe): name(name), ux_ts_ms(0), 
+	updated(false), topoe(topoe){
+	if(sys_map_info_map.find(name) != sys_map_info_map.end()){
+		type = sys_map_info_map[name].second;
+	}
+}
+
+template<class T>
 void sys_map<T>::print(){
 	cout<< "SYS_MAP: " << name << endl;
 	for(auto& vm: vm_map){
@@ -136,6 +151,11 @@ void sys_map<T>::print(){
 template<class T>
 string sys_map<T>::get_name(){
 	return name;
+}
+
+template<class T>
+string sys_map<T>::get_base_type(){
+	return type;
 }
 
 template<class T>
@@ -494,8 +514,8 @@ map_record<T>& sys_map<T>::pnode_view(int pnode_id, int vm_id){
 
 template<class T>
 int sys_map<T>::update(topo_change_d* topod, long long since_last_sec){
-	if (sys_map_func_map.find(name) == sys_map_func_map.end()){
-		cerr << "sys_map<T>::update() err: cannot find func in sys_map_func_map" << endl;
+	if (sys_map_info_map.find(name) == sys_map_info_map.end()){
+		cerr << "sys_map<T>::update() err: cannot find func in sys_map_info_map" << endl;
 		return -1;
 	}
 	//assert(typeid(T) == sys_map_func_map[name].second);
@@ -503,7 +523,7 @@ int sys_map<T>::update(topo_change_d* topod, long long since_last_sec){
 	ux_ts_ms = time(NULL)*1000;
 	long long ux_ts_since_ms = since_last_sec < 0? -1: ux_ts_ms-(since_last_sec*1000);
 	updated = true;
-	return sys_map_func_map[name](topod, this, ux_ts_since_ms);
+	return sys_map_info_map[name].first(topod, this, ux_ts_since_ms);
 }
 
 #endif
