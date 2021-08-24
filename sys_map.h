@@ -47,6 +47,7 @@ public:
 	virtual vector<int> vm_list_within_pnode(int) = 0 ;
 	virtual int update(topo_change_d*, long long since_ux_ts_ms) = 0;
 	virtual void mark_outdated() = 0;
+	virtual bool is_outdated() = 0;
 	//virtual map_record<T> vm_view(int vm_id, int vnode_id);
 	//virtual map_record<T> pnode_view(int pnode_id, int vm_id);
 };
@@ -67,6 +68,7 @@ class sys_map: public sys_map_base {
 	void print();
 	string get_name();
 	void mark_outdated();
+	bool is_outdated();
 
 	vector<int> vm_list(); 
 	vector<int> vnode_list(int vm_id);
@@ -139,6 +141,10 @@ string sys_map<T>::get_name(){
 template<class T>
 void sys_map<T>::mark_outdated(){
 	updated = false;	
+}
+template<class T>
+bool sys_map<T>::is_outdated(){
+	return !updated;
 }
 
 template<class T>
@@ -487,7 +493,7 @@ map_record<T>& sys_map<T>::pnode_view(int pnode_id, int vm_id){
 }
 
 template<class T>
-int sys_map<T>::update(topo_change_d* topod, long long since_ux_ts_ms){
+int sys_map<T>::update(topo_change_d* topod, long long since_last_sec){
 	if (sys_map_func_map.find(name) == sys_map_func_map.end()){
 		cerr << "sys_map<T>::update() err: cannot find func in sys_map_func_map" << endl;
 		return -1;
@@ -495,8 +501,9 @@ int sys_map<T>::update(topo_change_d* topod, long long since_ux_ts_ms){
 	//assert(typeid(T) == sys_map_func_map[name].second);
 	clear();
 	ux_ts_ms = time(NULL)*1000;
+	long long ux_ts_since_ms = since_last_sec < 0? -1: ux_ts_ms-(since_last_sec*1000);
 	updated = true;
-	return sys_map_func_map[name](topod, this, since_ux_ts_ms);
+	return sys_map_func_map[name](topod, this, ux_ts_since_ms);
 }
 
 #endif

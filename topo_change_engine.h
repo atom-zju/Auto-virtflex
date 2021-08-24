@@ -50,6 +50,7 @@ class topo_change_engine{
 		~topo_change_engine();
 		void config();
 		
+		sys_map_base* get_sys_map(string sys_map_name); /////
 		int generate_events2(deque<topo_change_event>& e);
 		int generate_events(deque<topo_change_event>& e);
 };

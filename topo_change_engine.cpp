@@ -350,13 +350,23 @@ void topo_change_engine::generate_sys_map_table(){
                 sys_map_table[NODE_SIZE_SYS_MAP] = new sys_map<int>(NODE_SIZE_SYS_MAP);
 }
 
+sys_map_base* topo_change_engine::get_sys_map(string sys_map_name){
+	if(sys_map_table.find(sys_map_name) == sys_map_table.end()){
+		sys_map_table[sys_map_name] = new sys_map<int>(sys_map_name); /////
+	}
+	if(sys_map_table[sys_map_name]->is_outdated())
+		sys_map_table[sys_map_name]->update(topod, 10);
+	return sys_map_table[sys_map_name];
+}
+
+
 int topo_change_engine::generate_new_topo_map(sys_map<int>& new_sys){
 	if(sys_map_table.find(TOPO_SYS_MAP) == sys_map_table.end() ||
            		sys_map_table.find(BW_USAGE_SYS_MAP) == sys_map_table.end())
 		return -1;
 	for(auto& x: sys_map_table){
 		// get data for the last 10 sec
-		x.second->update(topod, (time(NULL)-10)*1000);
+		x.second->update(topod, 10);
 	}
 	sys_map<int>& old_sys = *(sys_map<int>*)sys_map_table[TOPO_SYS_MAP]; 
 	new_sys = old_sys;
