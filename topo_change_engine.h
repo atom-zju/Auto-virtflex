@@ -31,22 +31,25 @@ class topo_change_engine{
 		priority_queue<event_candidate, vector<event_candidate>, comp> shrink_heap;
 		topo_change_d* topod;
 		workload_attr* wlattr;
+		unordered_map<string, sys_map_base*> sys_map_table;
+
 		int (*topo_changeness)(vm* v);
 		int (*shrink_candidate)(vm* v, int num, vector<int>& can);
 		int (*expand_candidate)(vm* v, int num, vector<int>& can);
 		void calculate_topo_changeness();
-		unordered_map<string, sys_map_base*> sys_map_table;
-		void generate_sys_map_table(); //////////////////
-		int get_sys_topo(sys_map<int>& old_sys);//////////////////
-		int generate_new_topo_map(unordered_map<string, sys_map_base*>& sys_map_tbl, 
-									sys_map<int>& new_sys); /////////////
-		int generate_topo_change_events(sys_map<int>& new_sys, sys_map<int>& old_sys,
-						deque<topo_change_event>& e);//////////
+
+		void generate_sys_map_table();
 		void mark_sys_map_table_outdated();
+		int get_sys_topo(sys_map<int>& old_sys);
+		int generate_new_topo_map(sys_map<int>& new_sys);
+		int generate_topo_change_events(sys_map<int>& new_sys, sys_map<int>& old_sys,
+						deque<topo_change_event>& e);
+
 	public:
 		topo_change_engine(topo_change_d* t);
 		~topo_change_engine();
 		void config();
+		
 		int generate_events2(deque<topo_change_event>& e);
 		int generate_events(deque<topo_change_event>& e);
 };

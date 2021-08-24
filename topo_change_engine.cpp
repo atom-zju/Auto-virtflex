@@ -350,22 +350,22 @@ void topo_change_engine::generate_sys_map_table(){
                 sys_map_table[NODE_SIZE_SYS_MAP] = new sys_map<int>(NODE_SIZE_SYS_MAP);
 }
 
-int topo_change_engine::generate_new_topo_map(unordered_map<string, sys_map_base*>& sys_map_tbl, sys_map<int>& new_sys){
-	if(sys_map_tbl.find(TOPO_SYS_MAP) == sys_map_tbl.end() ||
-           		sys_map_tbl.find(BW_USAGE_SYS_MAP) == sys_map_tbl.end())
+int topo_change_engine::generate_new_topo_map(sys_map<int>& new_sys){
+	if(sys_map_table.find(TOPO_SYS_MAP) == sys_map_table.end() ||
+           		sys_map_table.find(BW_USAGE_SYS_MAP) == sys_map_table.end())
 		return -1;
-	for(auto& x: sys_map_tbl){
+	for(auto& x: sys_map_table){
 		// get data for the last 10 sec
 		x.second->update(topod, (time(NULL)-10)*1000);
 	}
-	sys_map<int>& old_sys = *(sys_map<int>*)sys_map_tbl[TOPO_SYS_MAP]; 
+	sys_map<int>& old_sys = *(sys_map<int>*)sys_map_table[TOPO_SYS_MAP]; 
 	new_sys = old_sys;
-	sys_map<int>& home_node_sys = *(sys_map<int>*)sys_map_tbl[HOME_NODE_SYS_MAP];
-	sys_map<int>& bw_sys = *(sys_map<int>*)sys_map_tbl[BW_USAGE_SYS_MAP];
-        sys_map<float>& cpu_sys = *(sys_map<float>*)sys_map_tbl[VCPU_USAGE_SYS_MAP];
-        sys_map<int>& num_thread_sys = *(sys_map<int>*)sys_map_tbl[NUM_THREAD_SYS_MAP];
-        sys_map<int>& node_size_sys = *(sys_map<int>*)sys_map_tbl[NODE_SIZE_SYS_MAP];
-        sys_map<int>& num_vcpu_sys = *(sys_map<int>*)sys_map_tbl[NUM_VCPU_SYS_MAP];
+	sys_map<int>& home_node_sys = *(sys_map<int>*)sys_map_table[HOME_NODE_SYS_MAP];
+	sys_map<int>& bw_sys = *(sys_map<int>*)sys_map_table[BW_USAGE_SYS_MAP];
+        sys_map<float>& cpu_sys = *(sys_map<float>*)sys_map_table[VCPU_USAGE_SYS_MAP];
+        sys_map<int>& num_thread_sys = *(sys_map<int>*)sys_map_table[NUM_THREAD_SYS_MAP];
+        sys_map<int>& node_size_sys = *(sys_map<int>*)sys_map_table[NODE_SIZE_SYS_MAP];
+        sys_map<int>& num_vcpu_sys = *(sys_map<int>*)sys_map_table[NUM_VCPU_SYS_MAP];
 	old_sys.print();
         bw_sys.print();
         cpu_sys.print();
@@ -482,7 +482,7 @@ int topo_change_engine::generate_events(deque<topo_change_event>& e){
 	generate_sys_map_table();
 	print_last_record(sys_map_table, topod);
 	sys_map<int> old_sys, new_sys;
-	if(generate_new_topo_map(sys_map_table, new_sys)< 0)
+	if(generate_new_topo_map(new_sys)< 0)
 		return -1;
 	if(get_sys_topo(old_sys) <0)
 		return -1;
