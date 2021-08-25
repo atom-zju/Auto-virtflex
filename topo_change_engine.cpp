@@ -392,6 +392,7 @@ int topo_change_engine::generate_new_topo_map(sys_map<int>& new_sys){
 	num_thread_sys.print();
 	home_node_assignment(topod, old_sys, home_node_sys);
 	home_node_sys.update(topod);
+	home_node_sys.print();
         bw_sys.prune(old_sys);
         bw_sys.print();
 	auto cpu_vm_sys = num_vcpu_sys.shrink_vm_sum();
@@ -400,6 +401,8 @@ int topo_change_engine::generate_new_topo_map(sys_map<int>& new_sys){
 	wlattr->update();
 	wlattr->print();
 	get_sys_map(IDLE_SYS_MAP)->print();
+	get_sys_map(TOPO_CHANGENESS_SYS_MAP)->print();
+	get_sys_map(SHRINK_NODE_RANK_SYS_MAP)->print();
 
 	// test sys_map
 	//sys_map<int> test_sys(NODE_SIZE_SYS_MAP);

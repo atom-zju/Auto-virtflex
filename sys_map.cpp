@@ -160,6 +160,99 @@ int idle_sys_map_update(topo_change_d* topod, sys_map_base* map, long long since
 	return 0;
 }
 
+int topo_changeness_sys_map_update(topo_change_d* topod, sys_map_base* map, long long since_ux_ts_ms){
+	assert(map->get_base_type() == "int");
+	auto smap = (sys_map<int>*)map;
+	unordered_map<int, int> scores;
+	auto idle_sys = (sys_map<int>*) smap->topoe->get_sys_map(IDLE_SYS_MAP);
+	auto bw_sys = (sys_map<int>*) smap->topoe->get_sys_map(BW_USAGE_SYS_MAP);
+	auto topo_sys = (sys_map<int>*) smap->topoe->get_sys_map(TOPO_SYS_MAP);
+	
+	int intact_range = 10;
+
+	int idle_score = -100;
+	for(auto& vm_id: idle_sys->vm_list()){
+		if(idle_sys->vm_view(vm_id, SYS_NODE_ID).data == 0){
+			scores[vm_id]+= idle_score;
+		}
+	}
+	for(auto& vm_id: topo_sys->vm_list()){
+		scores[vm_id] += 2-topo_sys->vm_sum(vm_id);
+	}
+	
+	int bw_high_thres = 700;
+	int bw_low_thres = 200;
+	int bw_high_score = 50;
+	int bw_low_score = -50;
+	for(auto& vm_id: bw_sys->vm_list()){
+                int bw = bw_sys->vm_avg(vm_id, topo_sys);
+		if( bw >= bw_high_thres){
+                        scores[vm_id]+= bw_high_score;
+                }
+		else if(bw <= bw_low_thres){
+			scores[vm_id]+= bw_low_score;
+		}
+        }
+	
+	for(auto&& x: scores){
+		// nuturalize small numbers
+		if(abs(x.second) <= intact_range){
+			x.second = 0;
+		}
+		// zero for vm that already reduced to 1 node
+		if(x.second < 0 && topo_sys->vm_sum(x.first) <= 1)
+			x.second = 0;
+	}
+
+	// print 
+	//cout << "vm topo changeness scores: ";
+	//for(auto& x: scores){
+	//	cout << "vm " << x.first << ": " << x.second << " | ";
+	//}
+	//cout << endl;
+	
+	for(auto& vm_id: topo_sys->vm_list()){
+		smap->push_back(map_record<int>(vm_id, SYS_NODE_ID, SYS_NODE_ID, scores[vm_id]));
+	}
+	return 0;
+	
+}
+
+int shrink_node_rank_sys_map_update(topo_change_d* topod, sys_map_base* map, long long since_ux_ts_ms){
+	assert(map->get_base_type() == "int");
+        auto smap = (sys_map<int>*)map;
+	auto topo_sys_ptr = (sys_map<int>*) smap->topoe->get_sys_map(TOPO_SYS_MAP);
+	auto topo_sys = *(topo_sys_ptr); // use a copy of topo_sys because the content might be modified
+	auto changeness_sys = (sys_map<int>*) smap->topoe->get_sys_map(TOPO_CHANGENESS_SYS_MAP);
+	auto home_node_sys = (sys_map<int>*) smap->topoe->get_sys_map(HOME_NODE_SYS_MAP);
+
+	unordered_map<int, int> scores;
+	for(auto& vm_id: changeness_sys->vm_list()){
+		if(changeness_sys->vm_sum(vm_id) < 0){
+			scores.clear();
+			for(auto& vnode_id: topo_sys.vnode_list(vm_id)){
+				int pnode_id = topod->vnode_to_pnode(vm_id, vnode_id);
+				scores[vnode_id] = 0;
+				// if home node, lower the shrink priority
+				if(home_node_sys->vm_view(vm_id, vnode_id).data == 1){
+					scores[vnode_id] += -200;
+				}
+				else{
+					// if shared with other vms, higher the shrink priority
+					int share_degree = topo_sys.pnode_sum(pnode_id);
+					if(share_degree > 1 ){
+			       			scores[vnode_id] += share_degree*50;
+						topo_sys.vm_view(vm_id, vnode_id).data = 0;
+					}
+				}
+				smap->push_back(map_record<int>(vm_id, vnode_id, pnode_id, scores[vnode_id]));
+			}
+		}
+	}	
+
+	return 0;
+}
+
 unordered_map<string, pair<int (*)(topo_change_d*, sys_map_base*, long long), string>> sys_map_info_map{
 	{TOPO_SYS_MAP, {topology_sys_map_update, "int"}},
 	{VCPU_USAGE_SYS_MAP, {vcpu_usage_sys_map_update, "float"}},
@@ -169,7 +262,7 @@ unordered_map<string, pair<int (*)(topo_change_d*, sys_map_base*, long long), st
 	{NODE_SIZE_SYS_MAP, {node_size_sys_map_update, "int"}},
 	{NUM_VCPU_SYS_MAP, {num_vcpu_sys_map_update, "int"}},
 	///////////////////////////////////////////
-	{IDLE_SYS_MAP, {idle_sys_map_update, "int"}}//,
-	//{TOPO_CHANGENESS_SYS_MAP, topo_changeness_sys_map_update},
-	//{SHRINK_NODE_RANK_SYS_MAP, shrink_node_rank_sys_map_update}
+	{IDLE_SYS_MAP, {idle_sys_map_update, "int"}},
+	{TOPO_CHANGENESS_SYS_MAP, {topo_changeness_sys_map_update, "int"}},
+	{SHRINK_NODE_RANK_SYS_MAP, {shrink_node_rank_sys_map_update, "int"}}
 };

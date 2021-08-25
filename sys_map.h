@@ -23,6 +23,8 @@ using namespace std;
 #define NODE_SIZE_SYS_MAP "node size sys map"		// base type: int, data source: vnode_map
 #define FREE_CLEAN_MEM_PERCNT "free and clean memory portion"	// base type: float, data source: sq::data_map
 #define IDLE_SYS_MAP "idle vm sys map"			// base type: int, data source VCPU_USAGE_SYS_MAP
+#define TOPO_CHANGENESS_SYS_MAP "topo_changeness sys map"	// base type: int, source: idle_sys, bw_sys, etc
+#define SHRINK_NODE_RANK_SYS_MAP "shrink node rank sys map"	// base type: int, source: topo_changess, etc
 
 template<class T>
 class map_record{
