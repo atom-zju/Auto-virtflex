@@ -42,6 +42,7 @@ class topo_change_engine{
 		void mark_sys_map_table_outdated();
 		void generate_sys_map_table();
 		int get_sys_topo(sys_map<int>& old_sys);
+		int generate_new_topo_map2(sys_map<int>& new_sys);
 		int generate_new_topo_map(sys_map<int>& new_sys);
 		int generate_topo_change_events(sys_map<int>& new_sys, sys_map<int>& old_sys,
 						deque<topo_change_event>& e);

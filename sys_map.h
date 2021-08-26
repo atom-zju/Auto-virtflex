@@ -109,8 +109,9 @@ class sys_map: public sys_map_base {
         sys_map<int> larger_than(T num); /////
         sys_map<int> smaller_than(T num); /////
 
-	void sort_vm_by_sum(vector<int>& vm_list, sys_map<int>* mask = NULL);
-	void sort_pnode_by_sum(vector<int>& pnode_list, sys_map<int>* mask = NULL);
+	void sort_vm_by_sum_ascend(vector<int>& vm_list, sys_map<int>* mask = NULL);
+	void sort_vnode_ascend(int vm_id, vector<int>& vnode_list);
+	void sort_pnode_by_sum_ascend(vector<int>& pnode_list, sys_map<int>* mask = NULL);
 	
 	T vm_avg(int vm_id, sys_map<int>* mask = NULL);
 	T vm_sum(int vm_id, sys_map<int>* mask = NULL);
@@ -369,35 +370,49 @@ int sys_map<T>::min_sum_pnode(sys_map<int>* mask){
 }
 
 template<class T>
-void sys_map<T>::sort_vm_by_sum(vector<int>& vm_list, sys_map<int>* mask){
+void sys_map<T>::sort_vnode_ascend(int vm_id, vector<int>& vnode_id_list){
+	priority_queue<pair<int, int>> pq;
+	for(auto& vnode_id: vnode_list(vm_id)){
+		pq.push(make_pair(-vm_view(vm_id, vnode_id).data, vnode_id));
+	}
+	vnode_id_list.clear();
+	while(!pq.empty()){
+		auto top = pq.top();
+		pq.pop();
+		vnode_id_list.push_back(top.second);
+	}
+}
+
+template<class T>
+void sys_map<T>::sort_vm_by_sum_ascend(vector<int>& vm_id_list, sys_map<int>* mask){
 	priority_queue<pair<T, int>> pq;
-	for(auto& vm_id: vm_list){
+	for(auto& vm_id: vm_list()){
 		auto sum = vm_sum(vm_id, mask);
 		if (sum == -1)
 			continue; 
 		pq.push(make_pair(-vm_sum(vm_id, mask), vm_id));
 	}
-	vm_list.clear();
+	vm_id_list.clear();
 	while(!pq.empty()){
 		auto p = pq.top();
 		pq.pop();
-		vm_list.push_back(p.second);
+		vm_id_list.push_back(p.second);
 	}
 }
 template<class T>
-void sys_map<T>::sort_pnode_by_sum(vector<int>& pnode_list, sys_map<int>* mask){
+void sys_map<T>::sort_pnode_by_sum_ascend(vector<int>& pnode_id_list, sys_map<int>* mask){
 	priority_queue<pair<T, int>> pq;
-	for(auto& pnode_id: pnode_list){
+	for(auto& pnode_id: pnode_list()){
 		auto sum = pnode_sum(pnode_id, mask);
 		if (sum == -1)
 			continue;
 		pq.push(make_pair(-sum, pnode_id));
 	}
-	pnode_list.clear();
+	pnode_id_list.clear();
 	while(!pq.empty()){
 		auto p = pq.top();
 		pq.pop();
-		pnode_list.push_back(p.second);
+		pnode_id_list.push_back(p.second);
 	}
 }
 

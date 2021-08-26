@@ -364,13 +364,15 @@ sys_map_base* topo_change_engine::get_sys_map(string sys_map_name){
 		else
 			return NULL;
 	}
-	if(sys_map_table[sys_map_name]->is_outdated())
+	if(sys_map_table[sys_map_name]->is_outdated()){
 		sys_map_table[sys_map_name]->update(topod, 10);
+		sys_map_table[sys_map_name]->print();
+	}
 	return sys_map_table[sys_map_name];
 }
 
 
-int topo_change_engine::generate_new_topo_map(sys_map<int>& new_sys){
+int topo_change_engine::generate_new_topo_map2(sys_map<int>& new_sys){
 	if(sys_map_table.find(TOPO_SYS_MAP) == sys_map_table.end() ||
            		sys_map_table.find(BW_USAGE_SYS_MAP) == sys_map_table.end())
 		return -1;
@@ -417,7 +419,7 @@ int topo_change_engine::generate_new_topo_map(sys_map<int>& new_sys){
                 if( bw_sys.vm_avg(vm_id, &old_sys) > 600 ){
                         //int vnode = old_sys.min_vnode_in_vm(vm_id);
 			auto pnode_list = new_sys.pnode_list();
-			new_sys.sort_pnode_by_sum(pnode_list);
+			new_sys.sort_pnode_by_sum_ascend(pnode_list);
 			// pick first pnode that doesn't have a home node, if doesn't exits then pick first one
 			int pnode = -1;
 			for (auto& pn: pnode_list){
@@ -461,7 +463,7 @@ int topo_change_engine::generate_new_topo_map(sys_map<int>& new_sys){
 			}
 			else{
 				auto vm_list = new_sys.vm_list_within_pnode(pnode_id);
-				new_sys.sort_vm_by_sum(vm_list);
+				new_sys.sort_vm_by_sum_ascend(vm_list);
 				bool assigned = false;
 				for(auto& vm_id: vm_list){
 					if(new_sys.pnode_view(pnode_id, vm_id).data == 1){
@@ -476,6 +478,49 @@ int topo_change_engine::generate_new_topo_map(sys_map<int>& new_sys){
 	}
 
 	return 0;
+}
+
+int topo_change_engine::generate_new_topo_map(sys_map<int>& new_sys){
+	auto topo_sys = (sys_map<int>*)get_sys_map(TOPO_SYS_MAP);
+	auto topo_changeness_sys = (sys_map<int>*)get_sys_map(TOPO_CHANGENESS_SYS_MAP);
+	auto shrink_node_rank_sys = (sys_map<int>*)get_sys_map(SHRINK_NODE_RANK_SYS_MAP);
+	new_sys = *topo_sys;
+
+	auto home_node_sys = (sys_map<int>*)get_sys_map(HOME_NODE_SYS_MAP);
+	home_node_assignment(topod, *topo_sys, *home_node_sys);
+	home_node_sys->update(topod);
+
+
+	// processing shrinking
+	for(auto& vm_id: topo_changeness_sys->vm_list()){
+		if(topo_changeness_sys->vm_sum(vm_id) < 0){
+			int vnode_id = shrink_node_rank_sys->max_vnode_in_vm(vm_id);
+			new_sys.vm_view(vm_id, vnode_id).data = 0;
+			cout << "shrinking vm " << vm_id << " vnode:" << vnode_id << endl;
+		}
+	}
+	// processing expansion
+	queue<int> free_pnode_q;
+	for(auto& pnode_id: new_sys.pnode_list()){
+		if(new_sys.pnode_sum(pnode_id) == 0)
+			free_pnode_q.push(pnode_id);
+	}
+	vector<int> vm_list;
+	cout << "free_pnode_q.size() :" << free_pnode_q.size() << endl; 
+	topo_changeness_sys->sort_vm_by_sum_ascend(vm_list);
+	for(int i=vm_list.size()-1; i >= 0; i--){
+		cout << "considering vm_id :" << vm_list[i] << endl;
+		if(free_pnode_q.empty())
+			break;
+		if(topo_changeness_sys->vm_sum(vm_list[i]) <= 0 )
+			break;
+		auto pnode_id = free_pnode_q.front();
+		free_pnode_q.pop();
+		int vnode_id = topod->pnode_to_vnode(vm_list[i], pnode_id);
+		new_sys.vm_view(vm_list[i], vnode_id).data = 1;
+		cout << "expanding vm " << vm_list[i] << " vnode:" << vnode_id << endl;
+	}
+	return 0;	
 }
 
 int topo_change_engine::generate_topo_change_events(sys_map<int>& new_sys, sys_map<int>& old_sys,

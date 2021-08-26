@@ -234,7 +234,8 @@ int shrink_node_rank_sys_map_update(topo_change_d* topod, sys_map_base* map, lon
 				int pnode_id = topod->vnode_to_pnode(vm_id, vnode_id);
 				scores[vnode_id] = 0;
 				// if home node, lower the shrink priority
-				if(home_node_sys->vm_view(vm_id, vnode_id).data == 1){
+				if(home_node_sys->vm_view(vm_id, vnode_id).data == 1 ||
+						topo_sys.vm_view(vm_id, vnode_id).data == 0){
 					scores[vnode_id] += -200;
 				}
 				else{

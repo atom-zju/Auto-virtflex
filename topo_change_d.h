@@ -59,6 +59,7 @@ public:
 	vector<int> vm_list();
 	string get_xs_path();
 	int vnode_to_pnode(int vm_id, int vnode_id);
+	int pnode_to_vnode(int vm_id, int pnode_id);
 	int reserved_vnode_id(int vm_id);
 	int set_reserved_vnode_id(int vm_id, int vnode_id);
 
