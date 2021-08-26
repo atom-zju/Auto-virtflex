@@ -170,7 +170,7 @@ int topo_changeness_sys_map_update(topo_change_d* topod, sys_map_base* map, long
 	
 	int intact_range = 10;
 
-	int idle_score = -100;
+	int idle_score = -200;
 	for(auto& vm_id: idle_sys->vm_list()){
 		if(idle_sys->vm_view(vm_id, SYS_NODE_ID).data == 0){
 			scores[vm_id]+= idle_score;
@@ -182,8 +182,8 @@ int topo_changeness_sys_map_update(topo_change_d* topod, sys_map_base* map, long
 	
 	int bw_high_thres = 700;
 	int bw_low_thres = 200;
-	int bw_high_score = 50;
-	int bw_low_score = -50;
+	int bw_high_score = 100;
+	int bw_low_score = -100;
 	for(auto& vm_id: bw_sys->vm_list()){
                 int bw = bw_sys->vm_avg(vm_id, topo_sys);
 		if( bw >= bw_high_thres){
@@ -228,26 +228,24 @@ int shrink_node_rank_sys_map_update(topo_change_d* topod, sys_map_base* map, lon
 
 	unordered_map<int, int> scores;
 	for(auto& vm_id: changeness_sys->vm_list()){
-		if(changeness_sys->vm_sum(vm_id) < 0){
-			scores.clear();
-			for(auto& vnode_id: topo_sys.vnode_list(vm_id)){
-				int pnode_id = topod->vnode_to_pnode(vm_id, vnode_id);
-				scores[vnode_id] = 0;
-				// if home node, lower the shrink priority
-				if(home_node_sys->vm_view(vm_id, vnode_id).data == 1 ||
-						topo_sys.vm_view(vm_id, vnode_id).data == 0){
-					scores[vnode_id] += -200;
-				}
-				else{
-					// if shared with other vms, higher the shrink priority
-					int share_degree = topo_sys.pnode_sum(pnode_id);
-					if(share_degree > 1 ){
-			       			scores[vnode_id] += share_degree*50;
-						topo_sys.vm_view(vm_id, vnode_id).data = 0;
-					}
-				}
-				smap->push_back(map_record<int>(vm_id, vnode_id, pnode_id, scores[vnode_id]));
+		scores.clear();
+		for(auto& vnode_id: topo_sys.vnode_list(vm_id)){
+			int pnode_id = topod->vnode_to_pnode(vm_id, vnode_id);
+			scores[vnode_id] = 0;
+			// if home node, lower the shrink priority
+			if(home_node_sys->vm_view(vm_id, vnode_id).data == 1 ||
+					topo_sys.vm_view(vm_id, vnode_id).data == 0){
+				scores[vnode_id] += -200;
 			}
+			else{
+				// if shared with other vms, higher the shrink priority
+				int share_degree = topo_sys.pnode_sum(pnode_id);
+				if(share_degree > 1 ){
+		       			scores[vnode_id] += share_degree*50;
+					topo_sys.vm_view(vm_id, vnode_id).data = 0;
+				}
+			}
+			smap->push_back(map_record<int>(vm_id, vnode_id, pnode_id, scores[vnode_id]));
 		}
 	}	
 
