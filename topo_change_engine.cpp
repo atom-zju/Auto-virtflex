@@ -589,6 +589,8 @@ int topo_change_engine::generate_events(deque<topo_change_event>& e){
 	generate_sys_map_table();
 	print_last_record();
 	sys_map<int> old_sys, new_sys;
+	wlattr->update();
+	wlattr->print();
 	if(generate_new_topo_map(new_sys)< 0)
 		return -1;
 	if(get_sys_topo(old_sys) <0)

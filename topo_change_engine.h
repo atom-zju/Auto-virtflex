@@ -26,6 +26,7 @@ struct comp {
 };
 
 class topo_change_engine{
+	friend int topo_changeness_sys_map_update(topo_change_d*, sys_map_base*, long long);
 	private:
 		priority_queue<event_candidate, vector<event_candidate>, comp> expand_heap;
 		priority_queue<event_candidate, vector<event_candidate>, comp> shrink_heap;

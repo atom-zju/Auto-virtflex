@@ -163,13 +163,17 @@ int idle_sys_map_update(topo_change_d* topod, sys_map_base* map, long long since
 int topo_changeness_sys_map_update(topo_change_d* topod, sys_map_base* map, long long since_ux_ts_ms){
 	assert(map->get_base_type() == "int");
 	auto smap = (sys_map<int>*)map;
+	auto topoe = smap->topoe;
 	unordered_map<int, int> scores;
 	auto idle_sys = (sys_map<int>*) smap->topoe->get_sys_map(IDLE_SYS_MAP);
 	auto bw_sys = (sys_map<int>*) smap->topoe->get_sys_map(BW_USAGE_SYS_MAP);
 	auto topo_sys = (sys_map<int>*) smap->topoe->get_sys_map(TOPO_SYS_MAP);
+	auto num_thread_sys = (sys_map<int>*) smap->topoe->get_sys_map(NUM_THREAD_SYS_MAP);
+	auto num_vcpu_sys = (sys_map<int>*) smap->topoe->get_sys_map(NUM_VCPU_SYS_MAP);
 	
 	int intact_range = 10;
-
+	
+	// idle scores
 	int idle_score = -200;
 	for(auto& vm_id: idle_sys->vm_list()){
 		if(idle_sys->vm_view(vm_id, SYS_NODE_ID).data == 0){
@@ -180,6 +184,7 @@ int topo_changeness_sys_map_update(topo_change_d* topod, sys_map_base* map, long
 		scores[vm_id] += 2-topo_sys->vm_sum(vm_id);
 	}
 	
+	// bw scores
 	int bw_high_thres = 700;
 	int bw_low_thres = 200;
 	int bw_high_score = 100;
@@ -193,7 +198,26 @@ int topo_changeness_sys_map_update(topo_change_d* topod, sys_map_base* map, long
 			scores[vm_id]+= bw_low_score;
 		}
         }
-	
+
+	// num of thread scores
+	int num_of_thread_score = 50;
+	for(auto& vm_id: num_vcpu_sys->vm_list()){
+		if(num_vcpu_sys->vm_sum(vm_id) < num_thread_sys->vm_sum(vm_id)){
+			scores[vm_id] += num_of_thread_score;
+		}
+	}
+
+	// guest specified workload attr: threads
+	int workload_attr_thread_score = 50;
+	for(auto& vm_id: num_vcpu_sys->vm_list()){
+		if(!topoe->wlattr->attr_exist(vm_id, "thread"))
+			continue;
+		int wl_nth = topoe->wlattr->query_attr(vm_id, "thread");
+		if(num_vcpu_sys->vm_sum(vm_id) < wl_nth)
+			scores[vm_id] += workload_attr_thread_score;
+	}
+
+	// post-processing scores	
 	for(auto&& x: scores){
 		// nuturalize small numbers
 		if(abs(x.second) <= intact_range){
@@ -205,12 +229,6 @@ int topo_changeness_sys_map_update(topo_change_d* topod, sys_map_base* map, long
 	}
 
 	// print 
-	//cout << "vm topo changeness scores: ";
-	//for(auto& x: scores){
-	//	cout << "vm " << x.first << ": " << x.second << " | ";
-	//}
-	//cout << endl;
-	
 	for(auto& vm_id: topo_sys->vm_list()){
 		smap->push_back(map_record<int>(vm_id, SYS_NODE_ID, SYS_NODE_ID, scores[vm_id]));
 	}
