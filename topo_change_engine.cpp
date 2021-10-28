@@ -484,7 +484,7 @@ bool topo_change_engine::can_preempt(int plus_vm_id, int minus_vm_id){
 	auto topo_changeness_sys = (sys_map<int>*)get_sys_map(TOPO_CHANGENESS_SYS_MAP);
 	int plus_vm_score = topo_changeness_sys->vm_sum(plus_vm_id);
 	int minus_vm_score = topo_changeness_sys->vm_sum(minus_vm_id);
-	if(plus_vm_score > 100 && plus_vm_score > 2*minus_vm_score)
+	if(plus_vm_score > 50 && plus_vm_score > 2*minus_vm_score)
 		return true;
 	return false;
 }

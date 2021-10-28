@@ -175,9 +175,11 @@ int topo_changeness_sys_map_update(topo_change_d* topod, sys_map_base* map, long
 	
 	// idle scores
 	int idle_score = -200;
+	cout << "idle scores: " << endl;
 	for(auto& vm_id: idle_sys->vm_list()){
 		if(idle_sys->vm_view(vm_id, SYS_NODE_ID).data == 0){
 			scores[vm_id]+= idle_score;
+			cout << "vm " << vm_id << " += " << idle_score << endl;
 		}
 	}
 	for(auto& vm_id: topo_sys->vm_list()){
@@ -189,32 +191,44 @@ int topo_changeness_sys_map_update(topo_change_d* topod, sys_map_base* map, long
 	int bw_low_thres = 200;
 	int bw_high_score = 100;
 	int bw_low_score = -100;
+	cout << "bw scores: " << endl;
 	for(auto& vm_id: bw_sys->vm_list()){
                 int bw = bw_sys->vm_avg(vm_id, topo_sys);
 		if( bw >= bw_high_thres){
                         scores[vm_id]+= bw_high_score;
+			cout << "vm " << vm_id << " += " << bw_high_score << "( bw: " << bw << ")" << endl;
                 }
 		else if(bw <= bw_low_thres){
 			scores[vm_id]+= bw_low_score;
+			cout << "vm " << vm_id << " += " << bw_low_score << "( bw: " << bw << ")" << endl;
 		}
         }
 
 	// num of thread scores
 	int num_of_thread_score = 50;
+	cout << "num thread scores: " << endl;
 	for(auto& vm_id: num_vcpu_sys->vm_list()){
 		if(num_vcpu_sys->vm_sum(vm_id) < num_thread_sys->vm_sum(vm_id)){
 			scores[vm_id] += num_of_thread_score;
+			cout << "vm " << vm_id << " += " << num_of_thread_score << "( vcpu: " 
+				<< num_vcpu_sys->vm_sum(vm_id) << ", th: " 
+				<<num_thread_sys->vm_sum(vm_id) << ")" << endl;
 		}
 	}
 
 	// guest specified workload attr: threads
+	cout << "workload attr scores: " << endl;
 	int workload_attr_thread_score = 50;
 	for(auto& vm_id: num_vcpu_sys->vm_list()){
 		if(!topoe->wlattr->attr_exist(vm_id, "thread"))
 			continue;
 		int wl_nth = topoe->wlattr->query_attr(vm_id, "thread");
-		if(num_vcpu_sys->vm_sum(vm_id) < wl_nth)
+		if(num_vcpu_sys->vm_sum(vm_id) < wl_nth){
 			scores[vm_id] += workload_attr_thread_score;
+			cout << "vm " << vm_id << " += " << workload_attr_thread_score 
+				<< "( vcpu: " << num_vcpu_sys->vm_sum(vm_id) << " , wlth: " 
+				<< wl_nth << ")" << endl;
+		}
 	}
 
 	// post-processing scores	
