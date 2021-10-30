@@ -44,8 +44,10 @@ class topo_change_engine{
 		void generate_sys_map_table();
 		int get_sys_topo(sys_map<int>& old_sys);
 		bool can_preempt(int plus_vm_id, int minus_vm_id);
-		int generate_new_topo_map2(sys_map<int>& new_sys);
 		int generate_new_topo_map(sys_map<int>& new_sys);
+		/* generate_new_topo_map(&)
+		 * 	policy_function_map[policy](&);
+		 */
 		int generate_topo_change_events(sys_map<int>& new_sys, sys_map<int>& old_sys,
 						deque<topo_change_event>& e);
 
@@ -55,7 +57,6 @@ class topo_change_engine{
 		void config();
 		
 		sys_map_base* get_sys_map(string sys_map_name); /////
-		int generate_events2(deque<topo_change_event>& e);
 		int generate_events(deque<topo_change_event>& e);
 };
 
