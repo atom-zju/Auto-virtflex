@@ -7,11 +7,13 @@
 #include "topo_change_d.h"
 #include "workload_attr.h"
 #include "topo_change_policy.h"
+//#include "topo_sys_map_generator.h"
 
 template<class T>
 class sys_map;
 class sys_map_base;
 class topo_change_d;
+class topo_sys_map_generator;
 
 class event_candidate{
 public:
@@ -35,6 +37,7 @@ class topo_change_engine{
 		topo_change_d* topod;
 		workload_attr* wlattr;
 		unordered_map<string, sys_map_base*> sys_map_table;
+		topo_sys_map_generator* topo_sys_map_gen;
 
 		int (*topo_changeness)(vm* v);
 		int (*shrink_candidate)(vm* v, int num, vector<int>& can);

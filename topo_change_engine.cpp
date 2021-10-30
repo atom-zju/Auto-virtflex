@@ -2,6 +2,7 @@
 #include <iostream>
 #include <cassert>
 #include "sys_map.h"
+#include "topo_sys_map_generator.h"
 
 /*       Topology changeness              */
 static int  naive_toggle(vm* v){
@@ -178,6 +179,7 @@ static int first_available_candidate(vm* v, int num, vector<int>& can){
 
 topo_change_engine::topo_change_engine(topo_change_d* t): topod(t){
 	wlattr = new workload_attr(topod->xs, topod);
+	topo_sys_map_gen = new topo_sys_map_generator(this);
 }
 
 topo_change_engine::~topo_change_engine(){
@@ -186,6 +188,8 @@ topo_change_engine::~topo_change_engine(){
 	for(auto& x: sys_map_table)
 		if(x.second)
 			delete x.second;
+	if(topo_sys_map_gen)
+		delete topo_sys_map_gen;
 }
 
 void topo_change_engine::config(){
@@ -382,75 +386,80 @@ bool topo_change_engine::can_preempt(int plus_vm_id, int minus_vm_id){
 }
 
 int topo_change_engine::generate_new_topo_map(sys_map<int>& new_sys){
+	
 	auto topo_sys = (sys_map<int>*)get_sys_map(TOPO_SYS_MAP);
-	auto topo_changeness_sys = (sys_map<int>*)get_sys_map(TOPO_CHANGENESS_SYS_MAP);
-	auto shrink_node_rank_sys = (sys_map<int>*)get_sys_map(SHRINK_NODE_RANK_SYS_MAP);
-	new_sys = *topo_sys;
-
 	auto home_node_sys = (sys_map<int>*)get_sys_map(HOME_NODE_SYS_MAP);
 	home_node_assignment(topod, *topo_sys, *home_node_sys);
 	home_node_sys->update(topod);
 
-	vector<int> vm_list;
-	vector<int> topo_changeness_list;
-	queue<int> free_pnode_q;
-	int hi;
-	topo_changeness_sys->sort_vm_by_sum_ascend(vm_list);
-	for(auto& pnode_id: new_sys.pnode_list()){
-		if(new_sys.pnode_sum(pnode_id) == 0)
-			free_pnode_q.push(pnode_id);
-	}
-	for(auto& vm_id: vm_list){
-		topo_changeness_list.push_back(topo_changeness_sys->vm_sum(vm_id));
-	}
-	// phase 1: natural trade, plus vm take away resources from minus vm
-	// processing shrinking
-	for(auto& vm_id: vm_list){
-		if(topo_changeness_sys->vm_sum(vm_id) >= 0){
-			break;
-		}
-		int vnode_id = shrink_node_rank_sys->max_vnode_in_vm(vm_id);
-		shrink_node_rank_sys->vm_view(vm_id, vnode_id).data = -200;
-		new_sys.vm_view(vm_id, vnode_id).data = 0;
-		free_pnode_q.push(new_sys.vm_view(vm_id, vnode_id).pnode_id);
-		cout << "shrinking vm " << vm_id << " vnode:" << vnode_id << endl;
-	}
-	// processing expansion
-	for(hi=vm_list.size()-1; hi >= 0; hi--){
-		cout << "considering vm_id :" << vm_list[hi] << endl;
-		if(free_pnode_q.empty())
-			break;
-		if(topo_changeness_sys->vm_sum(vm_list[hi]) <= 0 )
-			return 0;
-		auto pnode_id = free_pnode_q.front();
-		free_pnode_q.pop();
-		int vnode_id = topod->pnode_to_vnode(vm_list[hi], pnode_id);
-		new_sys.vm_view(vm_list[hi], vnode_id).data = 1;
-		cout << "expanding vm " << vm_list[hi] << " vnode:" << vnode_id << endl;
-	}
-	// phase 2: extra trade (include preempt)
-	int lo=0;
-	while(lo < hi){
-		if(topo_changeness_list[hi] <= 0)
-			return 0;
-		if(new_sys.vm_sum(vm_list[lo]) > 1){
-			if(topo_changeness_list[lo] >= 0 && !can_preempt(vm_list[hi], vm_list[lo]))
-				return 0;
-			int lo_vnode_id = shrink_node_rank_sys->max_vnode_in_vm(vm_list[lo]);
-                	new_sys.vm_view(vm_list[lo], lo_vnode_id).data = 0;	
-                	shrink_node_rank_sys->vm_view(vm_list[hi], lo_vnode_id).data = -200;
-			cout << "shrinking vm " << vm_list[lo] << " vnode:" << lo_vnode_id << endl;
-			int hi_vnode_id = topod->pnode_to_vnode(vm_list[hi], 
-					topod->vnode_to_pnode(vm_list[lo], lo_vnode_id));
-                	new_sys.vm_view(vm_list[hi], hi_vnode_id).data = 1;
-			cout << "expanding vm " << vm_list[hi] << " vnode:" << hi_vnode_id << endl;
-			hi--;
-		}
-		else{
-			lo++;
-		}
-	}
-	return 0;	
+	assert(topo_sys_map_gen);
+	return topo_sys_map_gen->generate_topo_sys_map(new_sys, max_topo_change_net_gain);
+	
+//	auto topo_changeness_sys = (sys_map<int>*)get_sys_map(TOPO_CHANGENESS_SYS_MAP);
+//	auto shrink_node_rank_sys = (sys_map<int>*)get_sys_map(SHRINK_NODE_RANK_SYS_MAP);
+//	new_sys = *topo_sys;
+//
+//
+//	vector<int> vm_list;
+//	vector<int> topo_changeness_list;
+//	queue<int> free_pnode_q;
+//	int hi;
+//	topo_changeness_sys->sort_vm_by_sum_ascend(vm_list);
+//	for(auto& pnode_id: new_sys.pnode_list()){
+//		if(new_sys.pnode_sum(pnode_id) == 0)
+//			free_pnode_q.push(pnode_id);
+//	}
+//	for(auto& vm_id: vm_list){
+//		topo_changeness_list.push_back(topo_changeness_sys->vm_sum(vm_id));
+//	}
+//	// phase 1: natural trade, plus vm take away resources from minus vm
+//	// processing shrinking
+//	for(auto& vm_id: vm_list){
+//		if(topo_changeness_sys->vm_sum(vm_id) >= 0){
+//			break;
+//		}
+//		int vnode_id = shrink_node_rank_sys->max_vnode_in_vm(vm_id);
+//		shrink_node_rank_sys->vm_view(vm_id, vnode_id).data = -200;
+//		new_sys.vm_view(vm_id, vnode_id).data = 0;
+//		free_pnode_q.push(new_sys.vm_view(vm_id, vnode_id).pnode_id);
+//		cout << "shrinking vm " << vm_id << " vnode:" << vnode_id << endl;
+//	}
+//	// processing expansion
+//	for(hi=vm_list.size()-1; hi >= 0; hi--){
+//		cout << "considering vm_id :" << vm_list[hi] << endl;
+//		if(free_pnode_q.empty())
+//			break;
+//		if(topo_changeness_sys->vm_sum(vm_list[hi]) <= 0 )
+//			return 0;
+//		auto pnode_id = free_pnode_q.front();
+//		free_pnode_q.pop();
+//		int vnode_id = topod->pnode_to_vnode(vm_list[hi], pnode_id);
+//		new_sys.vm_view(vm_list[hi], vnode_id).data = 1;
+//		cout << "expanding vm " << vm_list[hi] << " vnode:" << vnode_id << endl;
+//	}
+//	// phase 2: extra trade (include preempt)
+//	int lo=0;
+//	while(lo < hi){
+//		if(topo_changeness_list[hi] <= 0)
+//			return 0;
+//		if(new_sys.vm_sum(vm_list[lo]) > 1){
+//			if(topo_changeness_list[lo] >= 0 && !can_preempt(vm_list[hi], vm_list[lo]))
+//				return 0;
+//			int lo_vnode_id = shrink_node_rank_sys->max_vnode_in_vm(vm_list[lo]);
+//                	new_sys.vm_view(vm_list[lo], lo_vnode_id).data = 0;	
+//                	shrink_node_rank_sys->vm_view(vm_list[hi], lo_vnode_id).data = -200;
+//			cout << "shrinking vm " << vm_list[lo] << " vnode:" << lo_vnode_id << endl;
+//			int hi_vnode_id = topod->pnode_to_vnode(vm_list[hi], 
+//					topod->vnode_to_pnode(vm_list[lo], lo_vnode_id));
+//                	new_sys.vm_view(vm_list[hi], hi_vnode_id).data = 1;
+//			cout << "expanding vm " << vm_list[hi] << " vnode:" << hi_vnode_id << endl;
+//			hi--;
+//		}
+//		else{
+//			lo++;
+//		}
+//	}
+//	return 0;	
 }
 
 int topo_change_engine::generate_topo_change_events(sys_map<int>& new_sys, sys_map<int>& old_sys,
