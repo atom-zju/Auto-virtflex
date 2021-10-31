@@ -91,6 +91,6 @@ int max_topo_change_net_gain_func(topo_change_engine* topo_ce, sys_map<int>& new
 //}
 
 
-unordered_map<topo_change_policy, int(*)(topo_change_engine*, sys_map<int>&, topo_change_policy)> policy_func_map = {
+unordered_map<topo_change_policy, int(*)(topo_change_engine*, sys_map<int>&, topo_change_policy)> policy_func_map ={
 	{max_topo_change_net_gain, max_topo_change_net_gain_func}
 };
