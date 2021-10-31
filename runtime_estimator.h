@@ -7,7 +7,7 @@ class runtime_estimator{
 	public:
 		topo_change_engine* topo_ce;
 		runtime_estimator(topo_change_engine* topo_ce): topo_ce(topo_ce){};
-		int remaining_runtime_in_sec(int vm_id);
+		int remaining_runtime_in_sec(int vm_id, int curr_num_node);
 };
 
 
