@@ -1,4 +1,8 @@
 #include "topo_sys_map_generator.h"
+#include "runtime_estimator.h"
+#include "performance_estimator.h"
+#include "migration_cost_estimator.h"
+#include "sys_map.h"
 #include <cassert>
 
 using namespace std;
@@ -84,7 +88,40 @@ int max_topo_change_net_gain_func(topo_change_engine* topo_ce, sys_map<int>& new
 			lo++;
 		}
 	}
-	return 0;
+	// before going to phase 3, check is there any changes between old sys and new sys, 
+	// if no, no need for phase 3
+	bool topo_sys_map_diff = false;
+	for(auto& vm_id: topo_sys->vm_list()){
+		for(auto& vnode_id: topo_sys->vnode_list(vm_id)){
+			if(new_sys.record_exist_vm_view(vm_id, vnode_id)
+                        && new_sys.vm_view(vm_id, vnode_id).data != topo_sys->vm_view(vm_id, vnode_id).data)
+                                topo_sys_map_diff = true;
+		}
+	}
+	if(!topo_sys_map_diff)
+		return 0;
+	// phase 3: considering the benefit and cost for topology change, approve or decline topo change.
+	double benefit=0;
+	double cost=0;
+	for(auto& vm_id: topo_sys->vm_list()){
+		int curr_num_node = topo_sys->vm_sum(vm_id);
+		int new_num_node = new_sys.vm_sum(vm_id);
+		float speedup=topo_ce->perf_esti->performance_gain_after_change(vm_id,curr_num_node,new_num_node);
+		benefit += (speedup-1)*topo_ce->runtime_esti->remaining_runtime_in_sec(vm_id, curr_num_node);
+	}	
+	
+	int migrate_cost_per_node_in_sec = 5;
+	cost = migrate_cost_per_node_in_sec * topo_ce->migration_cost_esti->
+		num_pages_to_be_migrated(*topo_sys, new_sys);
+
+	// if the benefit outweight the cost, output 0 to approve the topo change, output -1 to decline.
+	cout << "topo change benefit: " << benefit << ", cost: " << cost << endl; 
+	if(benefit > cost)
+		return 0;
+	else{
+		cout << "topo change declined" << endl;
+		return -1;
+	}
 }
 
 //int topo_change_engine::generate_new_topo_map(sys_map<int>& new_sys){
