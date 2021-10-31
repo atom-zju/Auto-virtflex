@@ -3,6 +3,9 @@
 #include <cassert>
 #include "sys_map.h"
 #include "topo_sys_map_generator.h"
+#include "runtime_estimator.h"
+#include "performance_estimator.h"
+#include "migration_cost_estimator.h"
 
 /*       Topology changeness              */
 static int  naive_toggle(vm* v){
@@ -180,6 +183,9 @@ static int first_available_candidate(vm* v, int num, vector<int>& can){
 topo_change_engine::topo_change_engine(topo_change_d* t): topod(t){
 	wlattr = new workload_attr(topod->xs, topod);
 	topo_sys_map_gen = new topo_sys_map_generator(this);
+	runtime_esti = new runtime_estimator(this);
+	perf_esti = new performance_estimator(this);
+	migration_cost_esti = new migration_cost_estimator(this);
 }
 
 topo_change_engine::~topo_change_engine(){
@@ -190,6 +196,12 @@ topo_change_engine::~topo_change_engine(){
 			delete x.second;
 	if(topo_sys_map_gen)
 		delete topo_sys_map_gen;
+	if(runtime_esti)
+		delete runtime_esti;
+	if(perf_esti)
+		delete perf_esti;
+	if(migration_cost_esti)
+		delete migration_cost_esti;
 }
 
 void topo_change_engine::config(){

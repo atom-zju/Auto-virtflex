@@ -14,6 +14,9 @@ class sys_map;
 class sys_map_base;
 class topo_change_d;
 class topo_sys_map_generator;
+class runtime_estimator;
+class migration_cost_estimator;
+class performance_estimator;
 
 class event_candidate{
 public:
@@ -37,7 +40,11 @@ class topo_change_engine{
 		topo_change_d* topod;
 		workload_attr* wlattr;
 		unordered_map<string, sys_map_base*> sys_map_table;
+		
 		topo_sys_map_generator* topo_sys_map_gen;
+		runtime_estimator* runtime_esti;
+		performance_estimator* perf_esti;
+		migration_cost_estimator* migration_cost_esti;
 
 		int (*topo_changeness)(vm* v);
 		int (*shrink_candidate)(vm* v, int num, vector<int>& can);
