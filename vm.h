@@ -24,11 +24,16 @@ public:
 	uint32_t start_time_sec_unix;
 	vm_logger* logger;
 	sample_queue<int>* num_thread_sampleq;
+	sample_queue<int>* idleness_sampleq;
+	sample_queue<int>* num_active_node_sampleq;
+
 	int topo_changeness;
 	int reserved_vnode_id;
 
         vector<deque<pair<long long, int>>> num_thread_sample;
         int max_sample_size;
+
+	bool is_running_workload();
 
 	vnode* get_vnode_by_id(int id);
 	int add_vnode(vnode*);

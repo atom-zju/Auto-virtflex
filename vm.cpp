@@ -16,6 +16,8 @@ vm::vm(int id, topo_change_d* d,string s):
 	num_thread_sampleq = new sample_queue<int>(xs_path+"/numa/num_thread", topod->xs,  
 		dir(vm_id, SYS_NODE_ID), NUM_OF_THREAD_SQ);
 	assert(num_thread_sampleq);
+	idleness_sampleq = new sample_queue<int>("", NULL, dir(vm_id, SYS_NODE_ID), IDLENESS_SQ, (void*)this);
+        num_active_node_sampleq = new sample_queue<int>("", NULL, dir(vm_id, SYS_NODE_ID), NUM_ACTIVE_NODE_SQ, (void*)this);
 }
 
 vm::~vm(){
@@ -41,6 +43,18 @@ vnode* vm::get_vnode_by_id(int id){
 	return NULL;
 }
 
+bool vm::is_running_workload(){
+	float average_cpu_percent_threshold = 0.10;
+	for(auto& x: vnode_map){
+		auto vnode = x.second;
+		if(!vnode->enabled)
+			continue;
+		float avg_percent = vnode->get_average_vcpu_load();
+		if(avg_percent > average_cpu_percent_threshold )
+			return true;
+	}	
+	return false; 
+}
 
 void vm::update_vnode_map(unsigned int ts){
 	this->ts = ts;
@@ -86,6 +100,12 @@ void vm::update_vnode_map(unsigned int ts){
 		cerr<< "VM " << vm_id << " failed to get num_thread samples" << endl;
 	else
 		num_thread_sampleq->print(); 
+	
+	idleness_sampleq->get_sample(start_time_sec_unix);
+	idleness_sampleq->print(10); 
+	
+	num_active_node_sampleq->get_sample(start_time_sec_unix);
+	num_active_node_sampleq->print(10); 
 }
 
 

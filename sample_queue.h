@@ -23,6 +23,8 @@
 #define CPU_USAGE_SQ "cpu sample queue"
 #define NUM_OF_THREAD_SQ "num of threads sample queue"
 #define BW_USAGE_SQ "bw sample queue"
+#define IDLENESS_SQ "idleness sample queue"
+#define NUM_ACTIVE_NODE_SQ "num of active node sameple queue"
 
 using namespace std;
 
@@ -63,7 +65,7 @@ public:
 	static bool has_sys_node(int vm);
 	
 	sample_queue(string xs_dir, struct xs_handle *xs, dir md, string name = TMP_NAME,
-				int max_size = MAX_SAMPLE_SIZE, void* owner=NULL); 
+				 void* owner=NULL, int max_size = MAX_SAMPLE_SIZE); 
 		//xs_dir(xs_dir), xs(xs), name(name), max_sample_size(max_size), owner(owner);
 	~sample_queue();
 	void calculate_averages();
@@ -93,7 +95,7 @@ unordered_map<int, unordered_map<int, unordered_map<string, vector<sample_queue<
 
 template<class T>
 sample_queue<T>::sample_queue(string xs_dir, struct xs_handle *xs, dir md, string name,
-		int max_size, void* owner): 
+		void* owner, int max_size): 
 		xs_dir(xs_dir), xs(xs), name(name), max_sample_size(max_size), owner(owner), map_dir(md){
 	data_map[map_dir.vm][map_dir.node][name].push_back(this);
 }

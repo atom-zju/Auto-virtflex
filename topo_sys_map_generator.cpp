@@ -98,8 +98,10 @@ int max_topo_change_net_gain_func(topo_change_engine* topo_ce, sys_map<int>& new
                                 topo_sys_map_diff = true;
 		}
 	}
+	
 	if(!topo_sys_map_diff)
 		return 0;
+	//return 0;
 	// phase 3: considering the benefit and cost for topology change, approve or decline topo change.
 	double benefit=0;
 	double cost=0;
@@ -110,18 +112,18 @@ int max_topo_change_net_gain_func(topo_change_engine* topo_ce, sys_map<int>& new
 		benefit += (speedup-1)*topo_ce->runtime_esti->remaining_runtime_in_sec(vm_id, curr_num_node);
 	}	
 	
-	int migrate_cost_per_node_in_sec = 5;
+	int migrate_cost_per_node_in_sec = 4;
 	cost = migrate_cost_per_node_in_sec * topo_ce->migration_cost_esti->
 		num_pages_to_be_migrated(*topo_sys, new_sys);
 
 	// if the benefit outweight the cost, output 0 to approve the topo change, output -1 to decline.
 	cout << "topo change benefit: " << benefit << ", cost: " << cost << endl; 
-	if(benefit > cost)
+	//if(benefit > cost)
 		return 0;
-	else{
-		cout << "topo change declined" << endl;
-		return -1;
-	}
+	//else{
+	//	cout << "topo change declined" << endl;
+	//	return -1;
+	//}
 }
 
 //int topo_change_engine::generate_new_topo_map(sys_map<int>& new_sys){

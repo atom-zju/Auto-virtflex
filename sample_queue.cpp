@@ -2,6 +2,7 @@
 #include "util.h"
 #include "cpu.h"
 #include "node.h"
+#include "vm.h"
 #include <sys/time.h>
 #include <unordered_map>
 #include <iostream>
@@ -76,8 +77,33 @@ int get_sample_from_xs(void* op1, void* op2, long long vm_start_time_sec_unix){
       	}
 }
 
+
+int get_idleness_sample(void* op1, void* op2, long long vm_start_time_sec_unix){
+	assert(op1 && op2);
+	auto sq = (sample_queue<int>*)op1;
+	auto owner_vm = (vm*)op2;
+	long long ts = time(0)*1000;
+	int idleness = owner_vm->is_running_workload();
+
+	sq->sample.push_back({ts, idleness});
+	return 0;
+}
+
+int get_num_active_node_sample(void* op1, void* op2, long long vm_start_time_sec_unix){
+	assert(op1 && op2);
+	auto sq = (sample_queue<int>*)op1;
+	auto owner_vm = (vm*)op2;
+	long long ts = time(0)*1000;
+	int num_active_node = owner_vm->active_node;
+
+	sq->sample.push_back({ts, num_active_node});
+	return 0;
+}
+
 unordered_map<string, int (*)(void*, void*, long long)> get_sample_func_map = {
         { CPU_USAGE_SQ, get_cpu_usage_sample },
 	{ BW_USAGE_SQ, get_sample_from_xs},
-	{ NUM_OF_THREAD_SQ, get_sample_from_xs}
+	{ NUM_OF_THREAD_SQ, get_sample_from_xs},
+	{ IDLENESS_SQ, get_idleness_sample },
+	{ NUM_ACTIVE_NODE_SQ, get_num_active_node_sample}
 };
