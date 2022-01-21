@@ -85,7 +85,8 @@ int get_idleness_sample(void* op1, void* op2, long long vm_start_time_sec_unix){
 	long long ts = time(0)*1000;
 	int idleness = owner_vm->is_running_workload();
 
-	sq->sample.push_back({ts, idleness});
+	if(sq->sample.empty() || sq->sample.back().second != idleness)
+		sq->sample.push_back({ts, idleness});
 	return 0;
 }
 
@@ -96,7 +97,8 @@ int get_num_active_node_sample(void* op1, void* op2, long long vm_start_time_sec
 	long long ts = time(0)*1000;
 	int num_active_node = owner_vm->active_node;
 
-	sq->sample.push_back({ts, num_active_node});
+	if(sq->sample.empty() || sq->sample.back().second != num_active_node)
+		sq->sample.push_back({ts, num_active_node});
 	return 0;
 }
 

@@ -185,7 +185,7 @@ void sample_queue<T>::print(int num){
 	cout << " SQ name: " << name;
 	cout << " Content: ";
 	int i = 0;
-	if( sample.size() - num >= 0)
+	if( (int)sample.size() - num > 0)
 		i = sample.size() - num;
 	for(; i < sample.size(); i++)
 		cout << sample[i].first << ", " <<sample[i].second << " | ";

@@ -24,6 +24,10 @@ int max_topo_change_net_gain_func(topo_change_engine* topo_ce, sys_map<int>& new
 	auto topo_changeness_sys = (sys_map<int>*)topo_ce->get_sys_map(TOPO_CHANGENESS_SYS_MAP);
 	auto shrink_node_rank_sys = (sys_map<int>*)topo_ce->get_sys_map(SHRINK_NODE_RANK_SYS_MAP);
 	new_sys = *topo_sys;
+	
+	//update estimators
+	topo_ce->runtime_esti->update();
+	topo_ce->runtime_esti->print();
 
 	auto home_node_sys = (sys_map<int>*)topo_ce->get_sys_map(HOME_NODE_SYS_MAP);
 	//home_node_assignment(topo_ce->topod, *topo_sys, *home_node_sys);

@@ -26,6 +26,7 @@ class topo_change_d {
 	friend class cpu;
 	friend class topo_change_engine;
 	friend class vm_logger;
+	friend class runtime_estimator;
 	friend int topology_sys_map_update(topo_change_d*, sys_map_base*, long long);
 	friend int home_node_sys_map_update(topo_change_d*, sys_map_base*, long long);
 	friend int num_vcpu_sys_map_update(topo_change_d*, sys_map_base*, long long);
