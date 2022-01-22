@@ -17,7 +17,7 @@ void runtime_estimator::print(){
 int runtime_estimator::remaining_runtime_in_sec(int vm_id, int curr_num_node){
 	// assumes that the runtime is 10s for all applications
 	int ret = 10;
-	if(est_map.find(vm_id) == est_map.end())
+	if(est_map.find(vm_id) == est_map.end() || est_map[vm_id].first < 0)
 		return ret;
 	pair<float, long long> p = est_map[vm_id];
 	time_t elapsed_time = time(0)-p.second/1000;
@@ -69,7 +69,7 @@ float crawl_runtime_since_ts_ux_ms(sample_queue<int>* idle_sq,
 		cnt++;
 		i++;
 	}
-	return cnt ==0? 0:sum/cnt;
+	return cnt ==0? -1:sum/cnt;
 }
 
 //unordered_map<int, pair<float, long long>> est_map;
@@ -94,7 +94,7 @@ void runtime_estimator::update(){
 			// if est entry not found, crawl sq to create entry, only update when is not running
 			//if(!vm_ptr->is_running_workload()){
 			if(!idle_sq->sample.empty() && idle_sq->sample.back().second == 0){
-				float rt = crawl_runtime_since_ts_ux_ms(idle_sq, active_node_sq, 0); 
+				float rt = crawl_runtime_since_ts_ux_ms(idle_sq, active_node_sq, 0);	
 				est_map[vm_id] = make_pair(rt, -1);
 			}
 		}
@@ -109,8 +109,12 @@ void runtime_estimator::update(){
 			// if just finished a workload, update est entry & strat time
 			long long last_ts = est_map[vm_id].second;
 			est_map[vm_id].second = -1;
+			float prev_rt = est_map[vm_id].first;
 			float rt = crawl_runtime_since_ts_ux_ms(idle_sq, active_node_sq, last_ts);
-			est_map[vm_id].first = recent_rt_weight*rt + (1-recent_rt_weight)*est_map[vm_id].first;
+			if(prev_rt < 0)
+				est_map[vm_id].first = rt;
+			else
+				est_map[vm_id].first = recent_rt_weight*rt + (1-recent_rt_weight)*prev_rt;
 		}
 	}
 }
