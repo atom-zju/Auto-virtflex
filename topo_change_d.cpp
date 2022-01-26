@@ -146,12 +146,13 @@ void topo_change_d::update_vm_map(){
 	}
 	
 	// log vm stats
-	for(auto& x: vm_map){
-		if(x.first!=0){
-			auto v = x.second;
-			v->logger->log();
-		}
-	}
+	//for(auto& x: vm_map){
+	//	if(x.first!=0){
+	//		auto v = x.second;
+	//		v->logger->insert_log_entry(time(0)*1000,"This is just a test");
+	//		v->logger->flush_log_to_disk();
+	//	}
+	//}
 
 }
 
