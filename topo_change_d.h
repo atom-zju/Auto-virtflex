@@ -42,7 +42,8 @@ private:
 	unsigned int interval_us;
 	unsigned int ts; // timestamp
 	topo_change_engine* engine;
-	string xs_path; 
+	string xs_path;
+       	bool interrupted;	
 	
 	vm* get_vm_by_id(int id);
 	int add_vm(vm*);
@@ -71,6 +72,7 @@ public:
 
 	void set_interval_ms(unsigned int ms);
 	void start();
+	void interrupt();
 	void generate_events();
 	void process_events();
 	

@@ -60,7 +60,7 @@ int topo_change_d::set_reserved_vnode_id(int vm_id, int vnode_id){
 	vm_map[vm_id]->reserved_vnode_id = vnode_id;
 	return 0;
 }
-topo_change_d::topo_change_d(){
+topo_change_d::topo_change_d():interrupted(false){
 	ts = 0;
 	xs =  xs_daemon_open();
 	xs_path = "/local/domain";
@@ -145,14 +145,15 @@ void topo_change_d::update_vm_map(){
 		x->update_vnode_map(ts);
 	}
 	
-	// log vm stats
-	//for(auto& x: vm_map){
-	//	if(x.first!=0){
-	//		auto v = x.second;
-	//		v->logger->insert_log_entry(time(0)*1000,"This is just a test");
-	//		v->logger->flush_log_to_disk();
-	//	}
-	//}
+	// get log entries from xs
+	for(auto& x: vm_map){
+		if(x.first!=0){
+			auto v = x.second;
+			v->logger->crawl_log_entries_from_xs();
+			//v->logger->insert_log_entry(time(0)*1000,"This is just a test");
+			v->logger->flush_log_to_disk();
+		}
+	}
 
 }
 
@@ -200,14 +201,17 @@ long long topo_change_d::pnode_cpu_usage(int pnode_id){
 }
 
 void topo_change_d::start(){
-	while(1){
-		while(event_list.empty()){
+	while(!interrupted){
+		while(!interrupted && event_list.empty()){
 			usleep(interval_us);
 			generate_events();
 		}
 		process_events();
 	}
+}
 
+void topo_change_d::interrupt(){
+	interrupted = true;
 }
 
 void topo_change_d::process_event(topo_change_event& e){

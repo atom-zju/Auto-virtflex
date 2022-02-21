@@ -14,18 +14,21 @@ class vm_logger{
 public:
 	string file_path;
 	ofstream log_file;
-	//int num_nodes;
 	vm *owner_vm;
+	string xs_path;
+	long long last_xs_ux_ts_ms;
+	long long vm_start_time_ms;
 	int time_window_in_sec;
 	vector<pair<long long ,string>> recent_entries;
 	
-	vm_logger(string file_path, vm* v, int time_window_in_sec=10): file_path(file_path), owner_vm(v),
-				time_window_in_sec(time_window_in_sec){}
+	vm_logger(string file_path, vm* v, int time_window_in_sec=10);
+	~vm_logger();
 	void init();
-	int floor_idx_of_in_mem_entries(long long ts_unix_ms);
 	void insert_log_entry(long long ts_unix_ms, string log_entry);
 	void flush_log_to_disk(bool flush_all = false);
-	~vm_logger();
+	void crawl_log_entries_from_xs();
+private:
+	int ceiling_idx_of_in_mem_entries(long long ts_unix_ms);
 };
 
 #endif

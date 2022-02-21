@@ -102,6 +102,11 @@ sample_queue<T>::sample_queue(string xs_dir, struct xs_handle *xs, dir md, strin
 
 template<class T>
 sample_queue<T>::~sample_queue(){
+	if(data_map.find(map_dir.vm) == data_map.end() ||
+			data_map[map_dir.vm].find(map_dir.node) == data_map[map_dir.vm].end() ||
+			data_map[map_dir.vm][map_dir.node].find(name) == 
+			data_map[map_dir.vm][map_dir.node].end())
+		return;
 	vector<sample_queue<T>*>& v = data_map[map_dir.vm][map_dir.node][name];
 	for( int i=0; i < v.size(); i++)
 		if(v[i] == this){

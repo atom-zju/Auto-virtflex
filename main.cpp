@@ -1,10 +1,18 @@
+#include <csignal>
 #include "topo_change_d.h"
 
 bool file_output = false;
 ofstream of;
+topo_change_d* topod_ptr = NULL;
 
 void print_usage(){
 	cout<< "Usage: sudo ./topo_change [output_filename]" << endl;
+}
+
+void signal_handler(int signum){
+	cout << "Interrupt signal recieved, exiting with signum " << signum << endl;
+	assert(topod_ptr);
+	topod_ptr->interrupt();	
 }
 
 int main(int argc, char** argv){
@@ -17,7 +25,9 @@ int main(int argc, char** argv){
 		}
 		file_output = true;
 	}
-       	topo_change_d topod;
+	topo_change_d topod;
+	topod_ptr = &topod;
+	signal(SIGINT, signal_handler);
        	topod.set_interval_ms(1000);
        	topod.start();
        	//topod.update_vm_map();

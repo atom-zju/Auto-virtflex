@@ -30,6 +30,10 @@ vm::~vm(){
 		delete logger;
 	if(num_thread_sampleq)
 		delete num_thread_sampleq;
+	if(idleness_sampleq)
+		delete idleness_sampleq;
+	if(num_active_node_sampleq)
+		delete num_active_node_sampleq;
 	cout << UNIX_TS<< "vm: " << vm_id << " terminated." << endl;
 	if(file_output)
 	of << UNIX_TS<< "vm: " << vm_id << " terminated." << endl;

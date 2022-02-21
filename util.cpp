@@ -78,6 +78,59 @@ bool xenstore_directory_is_valid(struct xs_handle* xs, const string path){
 	return list_xenstore_directory(xs, path, v) == 0;	
 }
 
+
+/*
+ *	xenstore log dir: numa/log/curr_sample_num
+ *				  /sample0
+ *				  /sample0_ts
+ *				  /sample1
+ *				  /sample1_ts
+ *				  ...
+ *
+ * */
+
+/*
+ * Effects: update last_ux_ts_mx to the newest timestamp
+ * */
+
+vector<pair<long long, string>> get_new_log_entries(struct xs_handle * xs, string dir, long long& last_ux_ts_ms, long long start_time_ms){
+	vector<pair<long long, string>> res;
+	string val_str;
+	string timestamp_str;
+	long long new_last_ts_ms = last_ux_ts_ms;
+	int sample_cnt = 0;
+	do{
+		if(read_from_xenstore_path(xs, dir+"/sample"+to_string(sample_cnt), val_str) == 0){
+			if(read_from_xenstore_path(xs, dir+"/sample"+to_string(sample_cnt)+"_ts", timestamp_str) == 0){
+				long long ts;
+				try{
+					ts = stoll(timestamp_str);
+				}
+				catch(...){
+					cerr << "stoll error in get_new_log_entries" << endl;
+					sample_cnt++;
+					continue;
+				}
+				cout << "ts: " << ts << endl;
+				cout << "val_str: " << val_str << endl;
+				ts+= start_time_ms; // convert the xenstore uptime ts to global unix ts
+				if(ts > last_ux_ts_ms){
+					if(ts > new_last_ts_ms)
+						new_last_ts_ms = ts;
+					res.push_back({ts, val_str});
+				}
+			}
+		}
+		else{
+			break;
+		}
+		sample_cnt++;
+	} while(1);
+
+	last_ux_ts_ms = new_last_ts_ms;	
+	return res;
+}
+
 /*
         xenstore stats directory structure:
                 numa/node/<node_id>/bw_usage_rd_0/curr_sample_num
