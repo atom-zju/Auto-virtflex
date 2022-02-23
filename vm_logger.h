@@ -11,7 +11,7 @@
 */
 
 class vm_logger{
-public:
+private:
 	string file_path;
 	ofstream log_file;
 	vm *owner_vm;
@@ -21,14 +21,14 @@ public:
 	int time_window_in_sec;
 	vector<pair<long long ,string>> recent_entries;
 	
+	int ceiling_idx_of_in_mem_entries(long long ts_unix_ms);
+public:
 	vm_logger(string file_path, vm* v, int time_window_in_sec=10);
 	~vm_logger();
 	void init();
 	void insert_log_entry(long long ts_unix_ms, string log_entry);
 	void flush_log_to_disk(bool flush_all = false);
 	void crawl_log_entries_from_xs();
-private:
-	int ceiling_idx_of_in_mem_entries(long long ts_unix_ms);
 };
 
 #endif
