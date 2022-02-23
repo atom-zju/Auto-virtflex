@@ -51,6 +51,8 @@ void vm_logger::insert_log_entry(long long unix_ts_ms, string log_entry){
 	long long valid_unix_ts = time(0)*1000 - time_window_in_sec*1000;
 	if(unix_ts_ms < valid_unix_ts)
 		return;
+	//cout << "insert log entry: " << unix_ts_ms << ", " << 
+	//	log_entry << " | curr_time:" << time(0)*1000 << endl;
 	if(recent_entries.empty()){
 		recent_entries.push_back({unix_ts_ms, log_entry});
 	}

@@ -119,7 +119,12 @@ int vm::shrink_vnode(int id){
 		cout<< UNIX_TS<< "Didn't find vnode " << id << " in vm::shrink_vnode" <<endl;
 		return -1;
 	}
-	return v->shrink(reserved_vnode_id);
+	int ret = v->shrink(reserved_vnode_id);
+	if(ret == 0){
+		logger->insert_log_entry(
+				(long long)time(0)*1000, "begin shrinking node "+ to_string(id));		
+	}
+	return ret;
 }
 int vm::expand_vnode(int id){
 	vnode* v = get_vnode_by_id(id);
@@ -127,7 +132,12 @@ int vm::expand_vnode(int id){
                 cout<< UNIX_TS<< "Didn't find vnode " << id << " in vm::expand_vnode" <<endl;
 		return -1;
 	}
-        return v->expand(reserved_vnode_id);
+        int ret = v->expand(reserved_vnode_id);
+	if(ret == 0){
+		logger->insert_log_entry(
+				(long long)time(0)*1000, "begin expanding node "+ to_string(id));
+	}
+	return ret;
 }
 
 long vm::average_bw_usage(){
