@@ -113,7 +113,7 @@ vector<pair<long long, string>> get_new_log_entries(struct xs_handle * xs, strin
 				}
 				cout << "ts: " << ts << endl;
 				cout << "val_str: " << val_str << endl;
-				ts+= start_time_ms; // convert the xenstore uptime ts to global unix ts
+				//ts+= start_time_ms; // convert the xenstore uptime ts to global unix ts
 				if(ts > last_ux_ts_ms){
 					if(ts > new_last_ts_ms)
 						new_last_ts_ms = ts;
@@ -210,7 +210,7 @@ void crawl_samples_from_xs(struct xs_handle * xs, string dir, deque<pair<long lo
 					sample_cnt++;
 					continue;
 				}
-				ts+= start_time_ms; // convert the xenstore uptime ts to global unix ts
+				//ts+= start_time_ms; // convert the xenstore uptime ts to global unix ts
 				bool dup;
 				int idx =  return_insert_index(samples, 0, samples.size()-1, ts, &dup);
 				if(!dup)
