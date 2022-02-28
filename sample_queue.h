@@ -63,6 +63,8 @@ public:
 	static vector<int> vnode_list(int vm);
 	static bool has_sys_vm();
 	static bool has_sys_node(int vm);
+	static float get_agg_avg_by_vm_id_sq_type(int vm_id, long long start_ts_ms, 
+			long long end_ts_ms, string sq_type);
 	
 	sample_queue(string xs_dir, struct xs_handle *xs, dir md, string name = TMP_NAME,
 				 void* owner=NULL, int max_size = MAX_SAMPLE_SIZE); 
@@ -74,6 +76,7 @@ public:
 	int get_sample(long long vm_start_time_sec_unix = 0);
 	void clear_sample();
 	T average_value_since_ts(long long valid_ts);
+	float range_average(long long start_ux_ts_ms, long long end_ux_ts_ms);
 	pair<long long, T> last_record();
 	void merge_sample_queue(sample_queue* s);
 	pair<long long, T> get_nearst_data_point(long long ux_ts_ms);
@@ -114,6 +117,38 @@ sample_queue<T>::~sample_queue(){
 			break;
 		}
 }
+
+template<class T>
+float sample_queue<T>::get_agg_avg_by_vm_id_sq_type(int vm_id, long long start_ts_ms, 
+		long long end_ts_ms, string sq_type){
+	float res = 0;
+	int cnt = 0;
+	if(data_map.find(vm_id) == data_map.end()){
+		return -1;
+	}
+	for(auto& x: data_map[vm_id]){
+		// for each node
+		//if(x.first == SYS_NODE_ID)
+		//	continue;
+		auto& node_map = x.second;
+		if(node_map.find(sq_type) == node_map.end())
+			continue;
+		for(auto& y: node_map[sq_type]){
+			// for each sq pointer
+			assert(y);
+			auto avg = y->range_average(start_ts_ms, end_ts_ms);
+			if((float)avg < 0)
+				continue;
+			res += (float)avg;
+			cnt++;	
+		}
+		
+	}
+	if(cnt == 0)
+		return -1;
+	return res/cnt;
+}
+
 template<class T>
 bool sample_queue<T>::has_sys_vm(){
 	if(sample_queue<T>::data_map.find(SYS_VM_ID) == sample_queue<T>::data_map.end())
@@ -276,6 +311,28 @@ T sample_queue<T>::average_value_since_ts(long long valid_ts){
 	//cout << "cut off ts: " << valid_ts << endl;
 	//cout << "valid sample cnt: " << cnt << endl;
 	return cnt? sum/(T)cnt: -1;
+}
+
+template<class T>
+float sample_queue<T>::range_average(long long start_ux_ts_ms, long long end_ux_ts_ms){
+	int start_idx, end_idx;
+	bool dup;
+	float res = 0;
+	int cnt = 0;
+	
+	assert(start_ux_ts_ms < end_ux_ts_ms);
+	start_idx = return_insert_index(sample, 0, sample.size()-1, start_ux_ts_ms, &dup);
+	end_idx = return_insert_index(sample, min(start_idx, (int)sample.size()-1), 
+			sample.size()-1, end_ux_ts_ms, &dup);
+	if(start_idx < 0 || end_idx < 0)
+		return -1;
+	for(int i=start_idx; i<end_idx && i<sample.size()-1; i++){
+		res += (float)sample[i].second;
+		cnt++;
+	}
+	if(cnt == 0)
+		return -1;
+	return res/(T)cnt;
 }
 
 template <class T>

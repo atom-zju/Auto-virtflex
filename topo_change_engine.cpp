@@ -6,6 +6,8 @@
 #include "runtime_estimator.h"
 #include "performance_estimator.h"
 #include "migration_cost_estimator.h"
+#include "workload_feature.h"
+#include "vm_logger.h"
 
 /*       Topology changeness              */
 static int  naive_toggle(vm* v){
@@ -476,6 +478,22 @@ int topo_change_engine::generate_new_topo_map(sys_map<int>& new_sys){
 
 int topo_change_engine::generate_topo_change_events(sys_map<int>& new_sys, sys_map<int>& old_sys,
                                                 deque<topo_change_event>& e){
+	// insert any topo changes events, some psdueo code
+	for(auto& vm_id: old_sys.vm_list()){
+		auto old_num_node = old_sys.vm_sum(vm_id);
+		auto new_num_node = new_sys.vm_sum(vm_id);
+		workload_feature wl_feat(vm_id, time(0)*1000-10*1000, time(0)*1000);
+		wl_feat.print();
+		if(old_num_node == new_num_node)
+			continue;
+		auto vm = topod->get_vm_by_id(vm_id);
+	       	assert(vm);
+		string log_str("topo change begin from "+ to_string(old_num_node) + 
+				" nodes to "+ to_string(new_num_node) + " nodes.");
+		vm->logger->insert_log_entry((long long)time(0)*1000, log_str);
+	}
+
+	// generate topo change events
 	for(auto& vm_id: old_sys.vm_list())
 		for(auto& vnode_id: old_sys.vnode_list(vm_id)){
 			auto old_data = old_sys.vm_view(vm_id,vnode_id);

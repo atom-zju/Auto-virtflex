@@ -15,3 +15,33 @@ int migration_cost_estimator::num_pages_to_be_migrated(sys_map<int>& old_sys, sy
 	}
 	return cnt;
 }
+
+int migration_cost_estimator::default_topo_change_estimate_ms(int vm_id, int from_num_node, 
+		int to_num_node){
+	if(from_num_node == to_num_node)
+		return 0;
+	else if (from_num_node < to_num_node)
+		return (to_num_node - from_num_node)*default_add_cost_per_node_ms;
+	else
+		return (from_num_node - to_num_node)*default_remove_cost_per_node_ms;
+}
+
+int migration_cost_estimator::topo_change_cost_estimate_ms(int vm_id, int from_num_node, 
+		int to_num_node, workload_feature feat){
+	if(est_map.find(vm_id) == est_map.end() 
+			|| est_map[vm_id].find({from_num_node, to_num_node}) == est_map[vm_id].end()){ 
+		return default_topo_change_estimate_ms(vm_id, from_num_node, to_num_node);
+	}
+	int max_similar_score = -1;
+	int cost_estimation = -1;
+	for(auto& x: est_map[vm_id][{from_num_node, to_num_node}]){
+		int similar_score = feat.similarity(x.first);
+		if(similar_score > max_similar_score){
+			similar_score = max_similar_score;
+			cost_estimation = x.second;
+		}
+	}
+	if(max_similar_score == -1)
+		return default_topo_change_estimate_ms(vm_id, from_num_node, to_num_node);
+	return cost_estimation;
+}

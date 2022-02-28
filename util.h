@@ -5,6 +5,8 @@
 #include<deque>
 #include<string>
 #include<unordered_map>
+#include<cassert>
+#include<iostream>
 extern "C"
 {
 #include <xenstore.h>
@@ -72,46 +74,41 @@ int floor_idx_of_sampleq(deque<pair<long long, T>>& samples,
 
 template<class T >
 int return_insert_index(deque<pair<long long, T>>& samples, int lo, int hi, long long timestamp, bool* duplicate){
+	//cout << "lo: " << lo << ", hi:" << hi << " ,sample.size:" << samples.size() << endl;
 	if(samples.empty()){
 		if(duplicate)
 			*duplicate = false;
 		return 0;
+	} 
+	assert(lo < samples.size() && hi < samples.size()
+		&& lo >=0 && hi >= 0);
+	int loo = lo, hii = hi;
+	if(timestamp < samples[loo].first){
+		if(duplicate)
+			*duplicate = false;
+		return 0;
 	}
-	if(lo == hi){
-		if(samples[lo].first == timestamp){
-			if(duplicate)
-				*duplicate = true;
-			return lo;
-		}
-		else if( timestamp < samples[lo].first){
-			if(duplicate)
-                                *duplicate = false;
-			return lo;
-		}
-		else{
-                        if(duplicate)
-                                *duplicate = false;
-			return lo+1;
-		}
+	if(timestamp > samples[hii].first){
+		if(duplicate)
+			*duplicate = false;
+		return hii+1;
 	}
-	int mid = (hi - lo)/2 + lo;
-	if (samples[mid].first == timestamp){
+	while(loo <= hii){
+		int mid = (hii - loo)/2 + loo;
+		if(samples[mid].first == timestamp){
 			if(duplicate)
 				*duplicate = true;
 			return mid;
-	}
-	else if (timestamp < samples[mid].first){
-		if(mid == lo)
-			return return_insert_index(samples, lo, mid, timestamp, duplicate);
+		}
+		else if (timestamp < samples[mid].first){
+			hii = mid -1;
+		}
 		else
-			return return_insert_index(samples, lo, mid-1, timestamp, duplicate);
+			loo = mid +1;
 	}
-	else{
-		if(mid == hi)
-			return return_insert_index(samples, mid, hi, timestamp, duplicate);
-		else
-			return return_insert_index(samples, mid+1, hi, timestamp, duplicate);
-	}
+	if(duplicate)
+		*duplicate = false;
+	return loo;
 }
 
 #endif
