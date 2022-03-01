@@ -26,6 +26,11 @@ int migration_cost_estimator::default_topo_change_estimate_ms(int vm_id, int fro
 		return (from_num_node - to_num_node)*default_remove_cost_per_node_ms;
 }
 
+void migration_cost_estimator::insert_topo_change_cost_esti_entry(int vm_id, int from_num_node,
+                                int to_num_node, workload_feature wl_feat, int cost_in_ms){
+	est_map[vm_id][{from_num_node, to_num_node}].push_back({wl_feat, cost_in_ms});
+}
+
 int migration_cost_estimator::topo_change_cost_estimate_ms(int vm_id, int from_num_node, 
 		int to_num_node, workload_feature feat){
 	if(est_map.find(vm_id) == est_map.end() 
