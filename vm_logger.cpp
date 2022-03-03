@@ -1,6 +1,7 @@
 #include "vm_logger.h"
 #include "topo_change_d.h"
 #include "util.h"
+#include "topo_change_status.h"
 #include <cassert>
 
 using namespace std;
@@ -87,6 +88,9 @@ void vm_logger::crawl_log_entries_from_xs(){
 	
 	for(auto& x: new_records){
 		//cout << "new_record len:" << x.second.size() << " content: " << x.second << " ts: " << x.first << endl;
+		if(x.second.find("topo change succeeded") != string::npos){
+			owner_vm->tc_status->topo_change_finished_one_node(x.first);
+		}
 		insert_log_entry(x.first, x.second);
 	}
 }

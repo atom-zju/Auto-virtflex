@@ -24,12 +24,13 @@ class migration_cost_estimator{
 		float default_remove_cost_per_node_ms;
 		int default_topo_change_estimate_ms(int vm_id, int from_num_node,
 				int to_num_node);
-	public:
 		topo_change_engine* topo_ce;
+	public:
 		migration_cost_estimator(topo_change_engine* topo_ce){
 			default_add_cost_per_node_ms = 500;
 			default_remove_cost_per_node_ms = 1000;
 		};
+		void print();
 		void insert_topo_change_cost_esti_entry(int vm_id, int from_num_node, 
 				int to_num_node, workload_feature wl_feat, int cost_in_ms);
 		int num_pages_to_be_migrated(sys_map<int>& old_sys, sys_map<int>& new_sys);

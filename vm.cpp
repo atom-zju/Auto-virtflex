@@ -4,6 +4,8 @@
 #include "vm.h"
 #include "vm_logger.h"
 #include "topo_change_d.h"
+#include "topo_change_status.h"
+#include "topo_change_engine.h"
 
 using namespace std;
 
@@ -11,6 +13,7 @@ vm::vm(int id, topo_change_d* d,string s):
 		xs_path(s), topod(d), vm_id(id), vcpu_path(s+"/cpu"), reserved_vnode_id(1){
 	start_time_sec_unix = libxl_vm_get_start_time(topod->xl_handle, vm_id);
 	logger = new vm_logger("log/vm_"+to_string(vm_id)+"_log.txt", this);
+	tc_status = new topo_change_status(this, topod->engine->migration_cost_esti);
 	assert(logger);
 	logger->init();
 	num_thread_sampleq = new sample_queue<int>(xs_path+"/numa/num_thread", topod->xs,  
@@ -34,6 +37,8 @@ vm::~vm(){
 		delete idleness_sampleq;
 	if(num_active_node_sampleq)
 		delete num_active_node_sampleq;
+	if(tc_status)
+		delete tc_status;
 	cout << UNIX_TS<< "vm: " << vm_id << " terminated." << endl;
 	if(file_output)
 	of << UNIX_TS<< "vm: " << vm_id << " terminated." << endl;

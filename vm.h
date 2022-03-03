@@ -9,6 +9,7 @@ using namespace std;
 
 class topo_change_d;
 class vm_logger;
+class topo_change_status;
 
 class vm{
 
@@ -23,6 +24,7 @@ public:
 	unsigned int ts;
 	uint32_t start_time_sec_unix;
 	vm_logger* logger;
+	topo_change_status* tc_status;
 	sample_queue<int>* num_thread_sampleq;
 	sample_queue<int>* idleness_sampleq;
 	sample_queue<int>* num_active_node_sampleq;

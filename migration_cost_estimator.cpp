@@ -1,6 +1,23 @@
 #include "migration_cost_estimator.h"
 #include "sys_map.h"
 
+void migration_cost_estimator::print(){
+	cout  << "==== migration_cost_esti_map ===" << endl;
+	for(auto& x: est_map){
+		cout << "vm_id: " << x.first<< endl;
+		for(auto& y: x.second){
+		      	cout << "(from_node, to_node): ( " << 
+			y.first.first << ", " << y.first.second << " )" << endl;
+			for(auto& z: y.second){
+				cout << "migration_cost_ms: " << z.second 
+					<< ", workload_feat: ";
+		       		z.first.print();
+			       	cout << endl;
+			}
+		}
+	}
+}
+
 int migration_cost_estimator::num_pages_to_be_migrated(sys_map<int>& old_sys, sys_map<int>& new_sys){
 	// assuming no node sharing,
 	// for current implementation, output is the number of nodes that has been changed instead of the
@@ -29,6 +46,7 @@ int migration_cost_estimator::default_topo_change_estimate_ms(int vm_id, int fro
 void migration_cost_estimator::insert_topo_change_cost_esti_entry(int vm_id, int from_num_node,
                                 int to_num_node, workload_feature wl_feat, int cost_in_ms){
 	est_map[vm_id][{from_num_node, to_num_node}].push_back({wl_feat, cost_in_ms});
+	print();
 }
 
 int migration_cost_estimator::topo_change_cost_estimate_ms(int vm_id, int from_num_node, 

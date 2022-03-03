@@ -35,6 +35,7 @@ class topo_change_engine{
 	friend int topo_changeness_sys_map_update(topo_change_d*, sys_map_base*, long long);
 	friend int max_topo_change_net_gain_func(topo_change_engine*, sys_map<int>&, topo_change_policy);
 	friend class runtime_estimator;
+	friend class vm;
 	private:
 		priority_queue<event_candidate, vector<event_candidate>, comp> expand_heap;
 		priority_queue<event_candidate, vector<event_candidate>, comp> shrink_heap;

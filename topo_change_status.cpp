@@ -5,7 +5,7 @@
 #include <cassert>
 
 topo_change_status::topo_change_status(vm* owner, migration_cost_estimator* esti){
-	assert(owner_vm);
+	assert(owner);
 	assert(esti);
 	owner_vm = owner;
 	migration_cost_esti = esti;
@@ -22,7 +22,7 @@ void topo_change_status::topo_change_status_change_begin(int from_num_node, int 
 }
 
 void topo_change_status::topo_change_finished_one_node(long long finished_ux_ts_ms){
-	if(!undergo_topo_change)
+	if(!undergo_topo_change || finished_ux_ts_ms <= start_topo_change_ux_ts_ms)
 		return;
 	progress_finished_num_node++;
 	if(progress_finished_num_node == abs(from_num_node - to_num_node)){

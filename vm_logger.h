@@ -1,8 +1,8 @@
 #ifndef LOGGER_H
 #define LOGGER_H
 
-#include "vm.h"
 #include <fstream>
+#include "vm.h"
 /*
 	vm log format:
 		Header: <vm id>, <num_nodes>, <sample_interval>\n
