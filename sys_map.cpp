@@ -4,6 +4,7 @@
 #include "vm.h"
 #include "topo_change_d.h"
 #include "topo_change_engine.h"
+#include "topo_change_status.h"
 
 int topology_sys_map_update(topo_change_d* topod, sys_map_base* map, long long since_ux_ts_ms){
 	assert(map->get_base_type() == "int");
@@ -284,6 +285,17 @@ int shrink_node_rank_sys_map_update(topo_change_d* topod, sys_map_base* map, lon
 	return 0;
 }
 
+int undergo_topo_change_sys_map_update(topo_change_d* topod, sys_map_base* map, long long since_ux_ts_ms){
+	assert(map->get_base_type() == "int");
+	auto smap = (sys_map<int>*) map;	
+	for(auto& vm: topod->vm_map){
+		if(vm.first == 0)
+			continue;
+		int data = vm.second->tc_status->is_undergo_topo_change();
+                smap->push_back(map_record<int>(vm.first, SYS_NODE_ID, SYS_NODE_ID, data));
+	}
+	return 0;
+}
 unordered_map<string, pair<int (*)(topo_change_d*, sys_map_base*, long long), string>> sys_map_info_map{
 	{TOPO_SYS_MAP, {topology_sys_map_update, "int"}},
 	{VCPU_USAGE_SYS_MAP, {vcpu_usage_sys_map_update, "float"}},
@@ -292,8 +304,9 @@ unordered_map<string, pair<int (*)(topo_change_d*, sys_map_base*, long long), st
 	{NUM_THREAD_SYS_MAP, {num_thread_sys_map_update, "int"}},
 	{NODE_SIZE_SYS_MAP, {node_size_sys_map_update, "int"}},
 	{NUM_VCPU_SYS_MAP, {num_vcpu_sys_map_update, "int"}},
+	{UNDERGO_TOPO_CHANGE_SYS_MAP, {undergo_topo_change_sys_map_update, "int"}},
 	///////////////////////////////////////////
 	{IDLE_SYS_MAP, {idle_sys_map_update, "int"}},
 	{TOPO_CHANGENESS_SYS_MAP, {topo_changeness_sys_map_update, "int"}},
-	{SHRINK_NODE_RANK_SYS_MAP, {shrink_node_rank_sys_map_update, "int"}}
+	{SHRINK_NODE_RANK_SYS_MAP, {shrink_node_rank_sys_map_update, "int"}},
 };

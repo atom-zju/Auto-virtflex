@@ -46,3 +46,7 @@ void topo_change_status::insert_topo_change_cost_data(long long finished_ux_ts_m
 			owner_vm->vm_id, from_num_node, to_num_node, wl_feat,
 			cost_ms);	
 }
+
+bool topo_change_status::is_undergo_topo_change(){
+	return undergo_topo_change;
+}

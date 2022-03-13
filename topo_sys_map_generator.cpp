@@ -23,11 +23,14 @@ int max_topo_change_net_gain_func(topo_change_engine* topo_ce, sys_map<int>& new
 	auto topo_sys = (sys_map<int>*)topo_ce->get_sys_map(TOPO_SYS_MAP);
 	auto topo_changeness_sys = (sys_map<int>*)topo_ce->get_sys_map(TOPO_CHANGENESS_SYS_MAP);
 	auto shrink_node_rank_sys = (sys_map<int>*)topo_ce->get_sys_map(SHRINK_NODE_RANK_SYS_MAP);
+	auto undergo_topo_change_sys = (sys_map<int>*) topo_ce->get_sys_map(UNDERGO_TOPO_CHANGE_SYS_MAP);
 	new_sys = *topo_sys;
 	
 	//update estimators
 	topo_ce->runtime_esti->update();
 	topo_ce->runtime_esti->print();
+
+	undergo_topo_change_sys->print();
 
 	auto home_node_sys = (sys_map<int>*)topo_ce->get_sys_map(HOME_NODE_SYS_MAP);
 	//home_node_assignment(topo_ce->topod, *topo_sys, *home_node_sys);
@@ -48,6 +51,8 @@ int max_topo_change_net_gain_func(topo_change_engine* topo_ce, sys_map<int>& new
 	// phase 1: natural trade, plus vm take away resources from minus vm
 	// processing shrinking
 	for(auto& vm_id: vm_list){
+		if(undergo_topo_change_sys->vm_sum(vm_id) == 1)
+			continue;
 		if(topo_changeness_sys->vm_sum(vm_id) >= 0){
 			break;
 		}
@@ -59,6 +64,8 @@ int max_topo_change_net_gain_func(topo_change_engine* topo_ce, sys_map<int>& new
 	}
 	// processing expansion
 	for(hi=vm_list.size()-1; hi >= 0; hi--){
+		if(undergo_topo_change_sys->vm_sum(vm_list[hi]) == 1)
+			continue;
 		cout << "considering vm_id :" << vm_list[hi] << endl;
 		if(free_pnode_q.empty())
 			break;

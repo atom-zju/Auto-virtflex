@@ -384,7 +384,8 @@ sys_map_base* topo_change_engine::get_sys_map(string sys_map_name){
 			return NULL;
 	}
 	if(sys_map_table[sys_map_name]->is_outdated()){
-		sys_map_table[sys_map_name]->update(topod, 10);
+		sys_map_table[sys_map_name]->update(topod, 
+			TOPO_CHNAGENESS_TIME_WINDOW_SECS);
 		sys_map_table[sys_map_name]->print();
 	}
 	return sys_map_table[sys_map_name];

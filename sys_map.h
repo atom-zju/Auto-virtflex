@@ -25,7 +25,7 @@ using namespace std;
 #define IDLE_SYS_MAP "idle vm sys map"			// base type: int, data source VCPU_USAGE_SYS_MAP
 #define TOPO_CHANGENESS_SYS_MAP "topo_changeness sys map"	// base type: int, source: idle_sys, bw_sys, etc
 #define SHRINK_NODE_RANK_SYS_MAP "shrink node rank sys map"	// base type: int, source: topo_changess, etc
-
+#define UNDERGO_TOPO_CHANGE_SYS_MAP "undergo topo change sys map " //base type: int, source: vm_map
 template<class T>
 class map_record{
 public:

@@ -27,6 +27,9 @@
 //#define UNIX_TS time(NULL)%1000000<<"\t" 
 #define UNIX_TS time(NULL)<<" [ TOPO CHANGE DAEMON ] " 
 
+// define the length of topochangeness caldulation time window in seconds
+#define TOPO_CHNAGENESS_TIME_WINDOW_SECS 5
+
 extern std::ofstream of;
 extern bool file_output;
 
