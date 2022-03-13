@@ -9,11 +9,11 @@ topo_change_status::topo_change_status(vm* owner, migration_cost_estimator* esti
 	assert(esti);
 	owner_vm = owner;
 	migration_cost_esti = esti;
-	undergo_topo_change = false;
+	status_type = topo_change_ready;
 }
 
 void topo_change_status::topo_change_status_change_begin(int from_num_node, int to_num_node){
-	undergo_topo_change = true;
+	status_type = undergo_topo_change;
 	assert(from_num_node != to_num_node);
 	this->from_num_node = from_num_node;
 	this->to_num_node = to_num_node;
@@ -22,13 +22,14 @@ void topo_change_status::topo_change_status_change_begin(int from_num_node, int 
 }
 
 void topo_change_status::topo_change_finished_one_node(long long finished_ux_ts_ms){
-	if(!undergo_topo_change || finished_ux_ts_ms <= start_topo_change_ux_ts_ms)
+	if( status_type != undergo_topo_change || finished_ux_ts_ms <= start_topo_change_ux_ts_ms)
 		return;
 	progress_finished_num_node++;
 	if(progress_finished_num_node == abs(from_num_node - to_num_node)){
 		// topo change ended
 		insert_topo_change_cost_data(finished_ux_ts_ms);
-		undergo_topo_change = false;
+		status_type = cool_down;
+		cool_down_cd = TOPO_CHNAGENESS_TIME_WINDOW_SECS;
 		progress_finished_num_node = 0;
 	}
 }
@@ -48,5 +49,15 @@ void topo_change_status::insert_topo_change_cost_data(long long finished_ux_ts_m
 }
 
 bool topo_change_status::is_undergo_topo_change(){
-	return undergo_topo_change;
+	return  status_type == undergo_topo_change || status_type == cool_down;
+}
+
+void topo_change_status::reduce_cool_down_cd(){
+	if(status_type != cool_down)
+		return;
+	assert(cool_down_cd > 0);
+	cool_down_cd--;
+	if(cool_down_cd <= 0){
+		status_type = topo_change_ready;
+	}
 }

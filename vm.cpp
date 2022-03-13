@@ -114,7 +114,10 @@ void vm::update_vnode_map(unsigned int ts){
 	idleness_sampleq->print(10); 
 	
 	num_active_node_sampleq->get_sample(start_time_sec_unix);
-	num_active_node_sampleq->print(10); 
+	num_active_node_sampleq->print(10);
+
+	// change topo change cool_down cd
+	tc_status->reduce_cool_down_cd();	
 }
 
 
